@@ -1,0 +1,109 @@
+﻿@page "/Trip/{id}"
+@inject HttpClient Http
+@inject IDialogService DialogService
+
+@if(_trip == null)
+{
+    <MudProgressCircular Indeterminate="true">Loading...</MudProgressCircular>
+}
+else if (_trip.TripId != _id)
+{
+    <MudText Typo="Typo.h6" Color="Color.Error">Error: Could not find trip.</MudText>
+}
+else
+{
+    <MudStack Row="true" Justify="Justify.SpaceBetween">
+        <MudText Typo="Typo.h2">@_trip.Name</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@((e) => CreateTransaction())">Add New Transaction</MudButton>
+    </MudStack>
+    @if (_trip.Transactions.Any())
+    {
+        <MudTable Items="@_trip.Transactions">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Transactions</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Transaction Name</MudTh>
+                <MudTh>Payer</MudTh>
+                <MudTh>Total</MudTh>
+                <MudTh />
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Transaction Name">@context.TransactionName</MudTd>
+                <MudTd DataLabel="Payer">@context.Payer</MudTd>
+                <MudTd DataLabl="Total">@context.Total</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Launch" Color="Color.Success" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+    else
+    {
+        <MudText Typo="Typo.h6" >There are no transactions for this trip.</MudText>
+    }
+}
+
+@code
+{
+    [CascadingParameter]
+    protected string UserEmail { get; set; }
+
+    private Trip _trip { get; set; }
+
+    private string _searchString = string.Empty;
+
+    private Guid _id;
+    [Parameter]
+    public string id
+    {
+        get => _id.ToString();
+        set => _id = Guid.Parse(value);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        LoadTrip();
+    }
+
+    private async void LoadTrip()
+    {
+        try
+        {
+            _trip = await Http.GetFromJsonAsync<Trip>($"/api/trip/{id}") ?? new Trip();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+    }
+
+    private async void CreateTransaction()
+    {
+        var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("New Transaction");
+        var result = await dialog.Result;
+
+        if (!result.Cancelled && result.Data is Transaction transaction)
+        {
+            _trip.Transactions.Add(transaction);
+            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+            StateHasChanged();
+        }
+    }
+
+    private bool FilterFunc(Transaction transaction) => FilterFunc(transaction, _searchString);
+
+    private bool FilterFunc(Transaction transaction, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (transaction.TransactionName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (transaction.Payer.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+}

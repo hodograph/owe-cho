@@ -1,0 +1,97 @@
+﻿@page "/Trips/{type}"
+@inject HttpClient Http
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+
+<MudStack Row="true" Justify="Justify.SpaceBetween">
+    <MudText Typo="Typo.h3">Trips</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@((e) => CreateTrip())">Start New Trip</MudButton>
+</MudStack>
+
+@if (_trips == null)
+{
+    <MudProgressCircular Indeterminate="true">Loading...</MudProgressCircular>
+}
+else if(_trips.Count() == 0)
+{
+    <MudText Typo="Typo.body1">There are no trips.</MudText>
+}
+else
+{
+    <MudTable Items="@_trips" Filter="new Func<Trip, bool>(FilterFunc)">
+        <ToolBarContent>
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Trip</MudTh>
+            <MudTh>Owner</MudTh>
+            <MudTh/>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Trip">@context.Name</MudTd>
+            <MudTd DataLabel="Owner">@context.Owner</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Launch" Color="Color.Success" Href="@($"/Trip/{context.TripId}")"/>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    [Parameter] 
+    public string? Type { get; set; }
+
+    private Trip[] _trips = null;
+
+    private string _searchString = string.Empty;
+
+    [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
+
+    [CascadingParameter] protected string UserEmail { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        LoadTrips();
+    }
+
+    private async void CreateTrip()
+    {
+        var dialog = await DialogService.ShowAsync<CreateTripDialog>("Start New Trip");
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            Trip trip = result.Data as Trip;
+            trip.Owner = UserEmail;
+            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", trip);
+            LoadTrips();
+        }
+    }
+
+    private async void LoadTrips()
+    {
+        try
+        {
+            _trips = await Http.GetFromJsonAsync<Trip[]>($"/api/trips/{UserEmail}") ?? new Trip[] { };
+            _trips = _trips.Where(x => x.Archived == (Type == "Archived")).ToArray();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }   
+    }
+
+    private bool FilterFunc(Trip trip) => FilterFunc(trip, _searchString);
+
+    private bool FilterFunc(Trip trip, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (trip.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (trip.Owner.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+}

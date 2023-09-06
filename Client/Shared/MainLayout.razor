@@ -1,34 +1,72 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 
-<div class="page">
-    <div class="sidebar">
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" @ref="@_mudThemeProvider"/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar>
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        SyncOwe
+        <LoginDisplay />
+    </MudAppBar>
+    <MudDrawer @bind-Open="@_drawerOpen">
         <NavMenu />
-    </div>
+        <MudSwitch @bind-Checked="@_isDarkMode" Color="Color.Primary" Class="ma-4" T="bool" Label="Toggle Light/Dark Mode" />
+    </MudDrawer>
+    <MudMainContent>
+        <CascadingValue Value="@UserEmail">
+            <MudContainer MaxWidth="MaxWidth.Large"> 
+                @Body
+            </MudContainer>
+        </CascadingValue>
+    </MudMainContent>
+</MudLayout>
 
-    <main>
-        <div class="top-row px-4 auth">
-            <LoginDisplay />
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
+@code {
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+    [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
 
-@code { 
+    [CascadingParameter] protected string UserEmail { get; set; }
 
-    [CascadingParameter] protected Task<AuthenticationState> AuthStat { get; set; }
+    private bool _drawerOpen = true;
+
+    private MudTheme _theme = new();
+    private bool _isDarkMode;
+    private MudThemeProvider _mudThemeProvider;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isDarkMode = await _mudThemeProvider.GetSystemPreference();
+            StateHasChanged();
+        }
+
+        var user = (await AuthState).User;
+        if (user.Identity.IsAuthenticated)
+        {
+            UserEmail = user.Identities.First().Claims.FirstOrDefault(x => x.Type == "preferred_username").Value;
+        }
+    }
 
     protected async override Task OnInitializedAsync()
     {
         base.OnInitialized();
-        var user = (await AuthStat).User;
+        var user = (await AuthState).User;
         if (!user.Identity.IsAuthenticated)
         {
             NavigationManager.NavigateTo($"authentication/login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}");
         }
+        else
+        {
+            UserEmail = user.Identities.First().Claims.FirstOrDefault(x => x.Type == "preferred_username").Value;
+        }
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
     }
 }

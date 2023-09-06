@@ -1,0 +1,33 @@
+﻿
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Start New Trip
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_trip.Name" Label="Name" Variant="Variant.Outlined"></MudTextField>
+    </DialogContent>
+     <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Success" OnClick="Add">Start Trip</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code
+{
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private Trip _trip { get; set; } = new Trip();
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Add()
+    {
+        _trip.TripId = Guid.NewGuid();
+        MudDialog.Close(DialogResult.Ok(_trip));
+    }
+}
