@@ -22,7 +22,7 @@ namespace Api
             [CosmosDBInput(databaseName: Constants.DATABASE_NAME,
             collectionName:Constants.TRIPS_TABLE_NAME,
             ConnectionStringSetting = Constants.CONNECTION_SETTINGS_KEY,
-            SqlQuery = "SELECT * FROM Trips t where t.TripId = {tripId}")] List<Trip> trips)
+            SqlQuery = "SELECT * FROM Trips t where t.id = {tripId}")] List<Trip> trips)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 

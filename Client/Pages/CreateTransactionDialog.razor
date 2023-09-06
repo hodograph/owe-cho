@@ -32,7 +32,7 @@
 
     private void Add()
     {
-        if(_transaction.TransactionId == null)
+        if(_transaction.TransactionId == default)
         {
             _transaction.TransactionId = Guid.NewGuid();
         }

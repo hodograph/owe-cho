@@ -27,7 +27,7 @@
 
     private void Add()
     {
-        _trip.TripId = Guid.NewGuid();
+        _trip.id = Guid.NewGuid();
         MudDialog.Close(DialogResult.Ok(_trip));
     }
 }

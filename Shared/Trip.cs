@@ -6,7 +6,7 @@ namespace BlazorApp.Shared
 {
     public class Trip
     {
-        public Guid TripId { get; set; }
+        public Guid id { get; set; }
         public string Name { get; set; }
         public string Owner { get; set; }
         public List<string> SharedWith { get; set; } = new List<string>();
