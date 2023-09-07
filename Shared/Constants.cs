@@ -6,7 +6,7 @@ namespace BlazorApp.Shared
 {
     public static class Constants
     {
-        public const string DATABASE_NAME = "owe-cho-database";
+        public const string DATABASE_NAME = "syncowe";
 
         public const string TRIPS_TABLE_NAME = "Trips";
 
