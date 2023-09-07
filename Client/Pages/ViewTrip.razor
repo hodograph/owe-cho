@@ -108,16 +108,16 @@ else
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Transaction Name">@context.TransactionName</MudTd>
-                <MudTd DataLabel="Payer">@Users.FirstOrDefault(x => x.email == context.Payer).DisplayName</MudTd>
+                <MudTd DataLabel="Payer">@Users?.FirstOrDefault(x => x.email == context.Payer).DisplayName</MudTd>
                 <MudTd DataLabel="Total">$@context.Total</MudTd>
                 <MudTd DataLabel="Personal Change">
-                    @if(context.Payer == CurrentUser.email)
+                    @if(context.Payer == CurrentUser?.email)
                     {
                         <MudText Color="Color.Success">$@GetAmountOwedToPayer(context)</MudText>
                     }
-                    else if(context.Debts.Any(x => x.Debtor == CurrentUser.email))
+                    else if(context.Debts.Any(x => x.Debtor == CurrentUser?.email))
                     {
-                        <MudText Color="Color.Error">$@context.CalculatePayments().FirstOrDefault(x => x.Debtor == CurrentUser.email).Amount</MudText>
+                        <MudText Color="Color.Error">$@context.CalculatePayments().FirstOrDefault(x => x.Debtor == CurrentUser?.email).Amount</MudText>
                     }
                     else
                     {
@@ -179,6 +179,12 @@ else
         try
         {
             _trip = await Http.GetFromJsonAsync<Trip>($"/api/trip/{id}") ?? new Trip();
+            _spentStats.Clear();
+            _oweStats.Clear();
+            _personalSpentStats.Clear();
+            _personalDebtStats.Clear();
+            _personalSpentIndex = -1;
+            _personalDebtIndex = -1;
             foreach(Transaction transaction in _trip.Transactions)
             {
                 User spender = UserFromEmail(transaction.Payer);
