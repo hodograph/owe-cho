@@ -8,9 +8,48 @@
     <DialogContent>
         <MudTextField @bind-Value="_transaction.TransactionName" Label="Name" Variant="Variant.Outlined"></MudTextField>
 
-        <MudAutocomplete T="User" Label="Payer" Variant="Variant.Outlined" T="string" SearchFunc="@Search" Value="_payer" ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"></MudAutocomplete>
+        <MudAutocomplete T="User" Label="Payer" Variant="Variant.Outlined" T="string" SearchFunc="@Search" @bind-Value="_payer" ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"></MudAutocomplete>
 
         <MudNumericField @bind-Value="_transaction.Total" Label="Total" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney"></MudNumericField>
+        <MudTable Items="@_transaction.Debts">
+            <ToolBarContent>
+                <MudText Typo="Typo.subtitle1">Debts</MudText>
+                <MudSpacer />
+                <MudButton FullWidth="false" StartIcon="@Icons.Material.Filled.Add" OnClick="(e) => {_transaction.Debts.Add(new Debt()); StateHasChanged();}">Add Debt</MudButton>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Debtor</MudTh>
+                <MudTh>Amount</MudTh>
+                <MudTh />
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Debtor">
+                    @Users.FirstOrDefault(y => y.email == context.Debtor)?.DisplayName
+                </MudTd>
+                <MudTd DataLabel="Amount">
+                    $ @context.Amount
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_transaction.Debts.Remove(context); StateHasChanged();}"></MudIconButton>
+                </MudTd>
+            </RowTemplate>
+            <RowEditingTemplate>
+                <MudTd DataLabel="Debtor">
+                    <MudAutocomplete 
+                        T="string" 
+                        Variant="Variant.Outlined" 
+                        SearchFunc="@SearchEmail" 
+                        @bind-Value="context.Debtor"
+                        ToStringFunc="@(x => Users.FirstOrDefault(y => y.email == x).DisplayName)"></MudAutocomplete>
+                </MudTd>
+                <MudTd DataLabel="Amount">
+                    <MudNumericField @bind-Value="context.Amount" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney"></MudNumericField>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_transaction.Debts.Remove(context); StateHasChanged();}"></MudIconButton>
+                </MudTd>
+            </RowEditingTemplate>
+        </MudTable>
     </DialogContent>
      <DialogActions>
         <MudButton Color="Color.Error" OnClick="Cancel">Cancel</MudButton>
@@ -39,8 +78,6 @@
 
     private User _payer;
 
-    private List<User> _debtors = new List<User>();
-
     private void Cancel()
     {
         MudDialog.Cancel();
@@ -65,5 +102,15 @@
         }
         return Users.Where(x => x.email.Contains(value, StringComparison.OrdinalIgnoreCase)
             || x.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task<IEnumerable<string>> SearchEmail(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return Users.Select(x => x.email);
+        }
+        return Users.Where(x => x.email.Contains(value, StringComparison.OrdinalIgnoreCase)
+            || x.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(x => x.email);
     }
 }

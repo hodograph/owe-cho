@@ -13,5 +13,9 @@ namespace BlazorApp.Shared
         public string Payer { get; set; }
 
         public double Total { get; set; }
+
+        public TransactionType TransactionType { get; set; }
+
+        public List<Debt> Debts { get; set; } = new List<Debt>();
     }
 }
