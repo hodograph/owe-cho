@@ -29,7 +29,7 @@ else
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Trip">@context.Name</MudTd>
-            <MudTd DataLabel="Owner">@context.Owner</MudTd>
+            <MudTd DataLabel="Owner">@Users.FirstOrDefault(x => x.email == context.Owner).DisplayName</MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Launch" Color="Color.Success" Href="@($"/Trip/{context.id}")"/>
             </MudTd>
@@ -47,32 +47,34 @@ else
 
     [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
 
-    [CascadingParameter] protected string UserEmail { get; set; }
+    [CascadingParameter] protected User CurrentUser { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    [CascadingParameter] protected User[] Users { get; set; }
+
+    protected override async Task OnParametersSetAsync()
     {
-        LoadTrips();
+        await LoadTrips();
     }
 
     private async void CreateTrip()
     {
-        var dialog = await DialogService.ShowAsync<CreateTripDialog>("Start New Trip");
+        var parameters = new DialogParameters<CreateTripDialog> { { x => x.Users, Users } };
+        var dialog = await DialogService.ShowAsync<CreateTripDialog>("Start New Trip", parameters);
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled && result.Data is Trip trip)
         {
-            Trip trip = result.Data as Trip;
-            trip.Owner = UserEmail;
+            trip.Owner = CurrentUser.email;
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", trip);
             LoadTrips();
         }
     }
 
-    private async void LoadTrips()
+    private async Task LoadTrips()
     {
         try
         {
-            _trips = await Http.GetFromJsonAsync<Trip[]>($"/api/trips/{UserEmail}") ?? new Trip[] { };
+            _trips = await Http.GetFromJsonAsync<Trip[]>($"/api/trips/{CurrentUser.email}") ?? new Trip[] { };
             _trips = _trips.Where(x => x.Archived == (Type == "Archived")).ToArray();
             StateHasChanged();
         }

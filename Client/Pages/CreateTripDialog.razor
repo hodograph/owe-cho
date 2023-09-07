@@ -1,16 +1,22 @@
 ﻿
 <MudDialog>
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            Start New Trip
-        </MudText>
-    </TitleContent>
     <DialogContent>
         <MudTextField @bind-Value="_trip.Name" Label="Name" Variant="Variant.Outlined"></MudTextField>
+        <MudStack Row="false">
+            <MudText Typo="Typo.subtitle1">Shared With</MudText>
+            @foreach(User user in _sharedWith)
+            {
+                <MudStack Row="true">
+                    <MudAutocomplete T="User" Label="User" Variant="Variant.Outlined" SearchFunc="@Search" Value="user" ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"></MudAutocomplete>
+                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_sharedWith.Remove(user); StateHasChanged();}"></MudIconButton>
+                </MudStack>
+            }
+            <MudButton FullWidth="false" StartIcon="@Icons.Material.Filled.Add" OnClick="(e) => {_sharedWith.Add(new User()); StateHasChanged();}">Add User</MudButton>
+        </MudStack>
     </DialogContent>
      <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Success" OnClick="Add">Start Trip</MudButton>
+        <MudButton Color="Color.Success" OnClick="Add">Submit</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -18,7 +24,23 @@
 {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
 
-    private Trip _trip { get; set; } = new Trip();
+    private Trip _trip = new Trip();
+
+    [Parameter]
+    public Trip Trip
+    {
+        get => _trip;
+        set
+        {
+            _trip = value;
+            _sharedWith = Users.Where(x => _trip.SharedWith.Contains(x.email)).ToList();
+        }
+    }
+
+    [Parameter]
+    public User[] Users { get; set; }
+
+    private List<User> _sharedWith = new List<User>();
 
     private void Cancel()
     {
@@ -27,7 +49,22 @@
 
     private void Add()
     {
-        _trip.id = Guid.NewGuid();
+        if(_trip.id == default)
+        {
+            _trip.id = Guid.NewGuid();
+        }
+
+        _trip.SharedWith = _sharedWith.Select(x => x.email).ToList();
         MudDialog.Close(DialogResult.Ok(_trip));
+    }
+
+    private async Task<IEnumerable<User>> Search(string value)
+    {
+       if (string.IsNullOrEmpty(value))
+        {
+            return Users;
+        }
+        return Users.Where(x => x.email.Contains(value, StringComparison.OrdinalIgnoreCase)
+            || x.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
     }
 }

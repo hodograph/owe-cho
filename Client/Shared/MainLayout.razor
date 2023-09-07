@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
+@inject HttpClient Http
 
 <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" @ref="@_mudThemeProvider"/>
 <MudDialogProvider/>
@@ -16,10 +17,12 @@
         <MudSwitch @bind-Checked="@_isDarkMode" Color="Color.Primary" Class="ma-4" T="bool" Label="Toggle Light/Dark Mode" />
     </MudDrawer>
     <MudMainContent>
-        <CascadingValue Value="@UserEmail">
-            <MudContainer MaxWidth="MaxWidth.Large"> 
-                @Body
-            </MudContainer>
+        <CascadingValue Value="@CurrentUser">
+            <CascadingValue Value="@Users">
+                <MudContainer MaxWidth="MaxWidth.Large"> 
+                    @Body
+                </MudContainer>
+            </CascadingValue>
         </CascadingValue>
     </MudMainContent>
 </MudLayout>
@@ -28,7 +31,9 @@
 
     [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
 
-    [CascadingParameter] protected string UserEmail { get; set; }
+    [CascadingParameter] protected User CurrentUser { get; set; }
+
+    [CascadingParameter] protected User[] Users { get; set; }
 
     private bool _drawerOpen = true;
 
@@ -43,30 +48,68 @@
             _isDarkMode = await _mudThemeProvider.GetSystemPreference();
             StateHasChanged();
         }
+    }
 
+    protected override async Task OnParametersSetAsync()
+    {
         var user = (await AuthState).User;
         if (user.Identity.IsAuthenticated)
         {
-            UserEmail = user.Identities.First().Claims.FirstOrDefault(x => x.Type == "preferred_username").Value;
+            UpdateUser(user.Identities.First().Claims.FirstOrDefault(x => x.Type == "preferred_username").Value, user.Identity.Name);
         }
     }
 
     protected async override Task OnInitializedAsync()
     {
         base.OnInitialized();
-        var user = (await AuthState).User;
-        if (!user.Identity.IsAuthenticated)
-        {
-            NavigationManager.NavigateTo($"authentication/login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}");
-        }
-        else
-        {
-            UserEmail = user.Identities.First().Claims.FirstOrDefault(x => x.Type == "preferred_username").Value;
-        }
+
+        
+        //if (!user.Identity.IsAuthenticated)
+        //{
+        //    NavigationManager.NavigateTo($"authentication/login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}");
+        //}
+        //UpdateUser(user.Identities.First().Claims.FirstOrDefault(x => x.Type == "preferred_username").Value, user.Identity.Name);
+        
     }
 
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
+    }
+
+    private async void UpdateUser(string email, string name)
+    {
+        try
+        {
+            bool changeState = false; 
+            if (Users == null)
+            {
+                Users = await Http.GetFromJsonAsync<User[]>($"/api/users");
+                changeState = true;
+            }
+            if (CurrentUser == null)
+            {
+                CurrentUser = await Http.GetFromJsonAsync<User>($"/api/user/{email}");
+                if (CurrentUser == null)
+                {
+                    CurrentUser = new User()
+                        {
+                            email = email,
+                            DisplayName = name
+                        };
+                    await Http.PutAsJsonAsync<User>("/api/SetUser", CurrentUser);
+                }
+                changeState = true; 
+            }
+
+            if (changeState)
+            {
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
     }
 }

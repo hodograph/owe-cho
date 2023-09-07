@@ -14,7 +14,13 @@ else
 {
     <MudStack Row="true" Justify="Justify.SpaceBetween">
         <MudText Typo="Typo.h2">@_trip.Name</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@((e) => CreateTransaction())">Add New Transaction</MudButton>
+        <MudStack Row="true">
+            @if(_trip.Owner == CurrentUser.email)
+            {
+                <MudButton Variant="Variant.Filled" OnClick="@((e) => EditTrip())">Edit Trip</MudButton>
+            }
+            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@((e) => CreateTransaction())">Add New Transaction</MudButton>
+        </MudStack>
     </MudStack>
     @if (_trip.Transactions.Any())
     {
@@ -32,10 +38,10 @@ else
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Transaction Name">@context.TransactionName</MudTd>
-                <MudTd DataLabel="Payer">@context.Payer</MudTd>
-                <MudTd DataLabl="Total">@context.Total</MudTd>
+                <MudTd DataLabel="Payer">@Users.FirstOrDefault(x => x.email == context.Payer).DisplayName</MudTd>
+                <MudTd DataLabel="Total">$@context.Total</MudTd>
                 <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Launch" Color="Color.Success" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Launch" Color="Color.Success" OnClick="@((e) => UpdateTransaction(context))"/>
                 </MudTd>
             </RowTemplate>
         </MudTable>
@@ -49,7 +55,10 @@ else
 @code
 {
     [CascadingParameter]
-    protected string UserEmail { get; set; }
+    protected User CurrentUser { get; set; }
+
+    [CascadingParameter]
+    protected User[] Users { get; set; }
 
     private Trip _trip { get; set; }
 
@@ -63,12 +72,12 @@ else
         set => _id = Guid.Parse(value);
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        LoadTrip();
+        await LoadTrip();
     }
 
-    private async void LoadTrip()
+    private async Task LoadTrip()
     {
         try
         {
@@ -83,12 +92,43 @@ else
 
     private async void CreateTransaction()
     {
-        var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("New Transaction");
+        var parameters = new DialogParameters < CreateTransactionDialog>{{ x => x.Users, Users}};
+        var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("New Transaction", parameters);
         var result = await dialog.Result;
 
-        if (!result.Cancelled && result.Data is Transaction transaction)
+        if (!result.Canceled && result.Data is Transaction transaction)
         {
             _trip.Transactions.Add(transaction);
+            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+            StateHasChanged();
+        }
+    }
+
+    private async void UpdateTransaction(Transaction transaction)
+    {
+        int index = _trip.Transactions.IndexOf(transaction);
+
+        var parameters = new DialogParameters<CreateTransactionDialog> { { x => x.Users, Users }, { x => x.Transaction, transaction} };
+        var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("Edit Transaction", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Transaction newTransaction)
+        {
+            _trip.Transactions[index] = newTransaction;
+            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+            StateHasChanged();
+        }
+    }
+
+    private async void EditTrip()
+    {
+        var parameters = new DialogParameters<CreateTripDialog> { { x => x.Users, Users }, { x => x.Trip, _trip } };
+        var dialog = await DialogService.ShowAsync<CreateTripDialog>("Edit Trip", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Trip updatedTrip)
+        {
+            _trip = updatedTrip;
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
             StateHasChanged();
         }

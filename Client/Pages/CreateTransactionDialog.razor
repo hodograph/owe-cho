@@ -8,13 +8,13 @@
     <DialogContent>
         <MudTextField @bind-Value="_transaction.TransactionName" Label="Name" Variant="Variant.Outlined"></MudTextField>
 
-        <MudTextField @bind-Value="_transaction.Payer" Label="Payer" Variant="Variant.Outlined"></MudTextField>
+        <MudAutocomplete T="User" Label="Payer" Variant="Variant.Outlined" T="string" SearchFunc="@Search" Value="_payer" ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"></MudAutocomplete>
 
         <MudNumericField @bind-Value="_transaction.Total" Label="Total" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney"></MudNumericField>
     </DialogContent>
      <DialogActions>
         <MudButton Color="Color.Error" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Success" OnClick="Add">Add Transaction</MudButton>
+        <MudButton Color="Color.Success" OnClick="Add">Submit</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -22,8 +22,24 @@
 {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
 
+    private Transaction _transaction = new Transaction();
     [Parameter]
-    public Transaction _transaction { get; set; } = new Transaction();
+    public Transaction Transaction
+    {
+        get => _transaction;
+        set
+        {
+            _transaction = value;
+            _payer = Users.FirstOrDefault(x => x.email == _transaction.Payer);
+        }
+    }
+
+    [Parameter]
+    public User[] Users { get; set; }
+
+    private User _payer;
+
+    private List<User> _debtors = new List<User>();
 
     private void Cancel()
     {
@@ -36,7 +52,18 @@
         {
             _transaction.TransactionId = Guid.NewGuid();
         }
-        
+        _transaction.Payer = _payer.email;
+
         MudDialog.Close(DialogResult.Ok(_transaction));
+    }
+
+    private async Task<IEnumerable<User>> Search(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return Users;
+        }
+        return Users.Where(x => x.email.Contains(value, StringComparison.OrdinalIgnoreCase)
+            || x.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
     }
 }
