@@ -4,11 +4,16 @@
 
 @if(_trip == null)
 {
-    <MudProgressCircular Indeterminate="true" Class="mx-auto">Loading...</MudProgressCircular>
+    <MudStack Row="true" Justify="Justify.Center" Class="pa-6" AlignItems="AlignItems.Center">
+        <MudProgressCircular Indeterminate="true" Class="mx-auto">Loading...</MudProgressCircular>
+    </MudStack>
 }
 else if (_trip.id != _id)
 {
-    <MudText Typo="Typo.h6" Color="Color.Error" Class="mx-auto">Error: Could not find trip.</MudText>
+    
+    <MudStack Row="true" Justify="Justify.Center" Class="pa-6" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h6" Color="Color.Error" Class="mx-auto">Error: Could not find trip.</MudText>
+    </MudStack>
 }
 else
 {
@@ -24,6 +29,70 @@ else
     </MudStack>
     @if (_trip.Transactions.Any())
     {
+        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+        <MudText Typo="Typo.h4">Personal Stats</MudText>
+        <MudStack Row="true" Justify="Justify.SpaceEvenly" Class="pa-6">
+            <MudPaper>
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">Owed To You</MudText>
+                    <MudChart 
+                        ChartType="ChartType.Donut" 
+                        InputData="@_personalSpentStats.Values.ToArray()" 
+                        InputLabels="@_personalSpentStats.Keys.Select(x => x.DisplayName).ToArray()"
+                        @bind-SelectedIndex="_personalSpentIndex">
+
+                        <CustomGraphics>
+                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">$@_personalSpentStats.Values.ToArray().Sum().ToString()</text>
+                            <MudText class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle">$@_personalSpentStats.Values.ToArray().Sum().ToString()</MudText>
+                        </CustomGraphics>
+                    </MudChart>
+                    @if (_personalSpentIndex >= 0)
+                    {
+                        <MudText Typo="Typo.body1">@_personalSpentStats.Keys.ToArray()[_personalSpentIndex].DisplayName: $@_personalSpentStats.Values.ToArray()[_personalSpentIndex]</MudText>
+                    }
+                </MudStack>
+            </MudPaper>
+            <MudPaper>
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">You Owe</MudText>
+                    <MudChart 
+                        ChartType="ChartType.Donut" 
+                        InputData="@_personalDebtStats.Values.ToArray()" 
+                        InputLabels="@_personalDebtStats.Keys.Select(x => x.DisplayName).ToArray()" 
+                        @bind-SelectedIndex="_personalDebtIndex">
+
+                        <CustomGraphics>
+                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">$@_personalDebtStats.Values.ToArray().Sum().ToString()</text>
+
+                            <MudText class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle">$@_personalDebtStats.Values.ToArray().Sum().ToString()</MudText>
+                        </CustomGraphics>
+                    </MudChart>
+                    @if (_personalDebtIndex >= 0)
+                    {
+                        <MudText Typo="Typo.body1">@_personalDebtStats.Keys.ToArray()[_personalDebtIndex].DisplayName: $@_personalDebtStats.Values.ToArray()[_personalDebtIndex]</MudText>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudStack>
+
+        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+        <MudText Typo="Typo.h4">Trip Stats</MudText>
+        <MudStack Row="true" Justify="Justify.SpaceEvenly" Class="pa-6">
+            <MudPaper>
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">Spending Stats</MudText>
+                    <MudChart ChartType="ChartType.Donut" InputData="@_spentStats.Values.ToArray()" InputLabels="@_spentStats.Keys.Select(x => x.DisplayName).ToArray()" />
+                </MudStack>
+            </MudPaper>
+            <MudPaper>
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">Debtor Stats</MudText>
+                    <MudChart ChartType="ChartType.Donut" InputData="@_oweStats.Values.ToArray()" InputLabels="@_oweStats.Keys.Select(x => x.DisplayName).ToArray()" />
+                </MudStack>
+            </MudPaper>
+        </MudStack>
+
+        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
         <MudTable Items="@_trip.Transactions">
             <ToolBarContent>
                 <MudText Typo="Typo.h6">Transactions</MudText>
@@ -34,12 +103,27 @@ else
                 <MudTh>Transaction Name</MudTh>
                 <MudTh>Payer</MudTh>
                 <MudTh>Total</MudTh>
+                <MudTh>Personal Change</MudTh>
                 <MudTh />
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Transaction Name">@context.TransactionName</MudTd>
                 <MudTd DataLabel="Payer">@Users.FirstOrDefault(x => x.email == context.Payer).DisplayName</MudTd>
                 <MudTd DataLabel="Total">$@context.Total</MudTd>
+                <MudTd DataLabel="Personal Change">
+                    @if(context.Payer == CurrentUser.email)
+                    {
+                        <MudText Color="Color.Success">$@GetAmountOwedToPayer(context)</MudText>
+                    }
+                    else if(context.Debts.Any(x => x.Debtor == CurrentUser.email))
+                    {
+                        <MudText Color="Color.Error">$@context.CalculatePayments().FirstOrDefault(x => x.Debtor == CurrentUser.email).Amount</MudText>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Default">-</MudText>
+                    }
+                </MudTd>
                 <MudTd>
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Success" OnClick="@((e) => UpdateTransaction(context))"/>
                 </MudTd>
@@ -64,6 +148,19 @@ else
 
     private string _searchString = string.Empty;
 
+    private Dictionary<User, double> _spentStats = new Dictionary<User, double>();
+
+    private Dictionary<User, double> _oweStats = new Dictionary<User, double>();
+
+    private Dictionary<User, double> _personalSpentStats = new Dictionary<User, double>();
+
+    private Dictionary<User, double> _personalDebtStats = new Dictionary<User, double>();
+
+    private int _personalSpentIndex = -1;
+
+    private int _personalDebtIndex = -1;
+
+
     private Guid _id;
     [Parameter]
     public string id
@@ -82,12 +179,58 @@ else
         try
         {
             _trip = await Http.GetFromJsonAsync<Trip>($"/api/trip/{id}") ?? new Trip();
+            foreach(Transaction transaction in _trip.Transactions)
+            {
+                User spender = UserFromEmail(transaction.Payer);
+
+                InitOrAddDebt(ref _spentStats, transaction.Total, spender);
+
+                foreach(Debt debt in transaction.CalculatePayments())
+                {
+                    User debtor = UserFromEmail(debt.Debtor);
+
+                    if (!debtor.Equals(spender))
+                    {
+                        InitOrAddDebt(ref _oweStats, debt.Amount, debtor);
+
+                        if (spender.Equals(CurrentUser))
+                        {
+                            InitOrAddDebt(ref _personalSpentStats, debt.Amount, debtor);
+                        }
+
+                        if (debtor.Equals(CurrentUser))
+                        {
+                            InitOrAddDebt(ref _personalDebtStats, debt.Amount, spender);
+                        }
+                    }
+                }
+            }
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.ToString());
         }
+    }
+
+    private void InitOrAddDebt(ref Dictionary<User, double> statDict, double amount, User user)
+    {
+        if (!statDict.ContainsKey(user))
+        {
+            statDict[user] = 0;
+        }
+
+        statDict[user] += amount;
+    }
+
+    private User UserFromEmail(string email)
+    {
+        return Users.FirstOrDefault(x => x.email == email);
+    }
+
+    private double GetAmountOwedToPayer(Transaction transaction)
+    {
+        return transaction.Total - transaction.CalculatePayments().Where(x => x.Debtor == transaction.Payer).Select(x => x.Amount).Sum();
     }
 
     private async void CreateTransaction()
@@ -101,7 +244,7 @@ else
         {
             _trip.Transactions.Add(transaction);
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
-            StateHasChanged();
+            LoadTrip();
         }
     }
 
@@ -118,7 +261,7 @@ else
         {
             _trip.Transactions[index] = newTransaction;
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
-            StateHasChanged();
+            LoadTrip();
         }
     }
 
@@ -137,7 +280,7 @@ else
         {
             _trip = updatedTrip;
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
-            StateHasChanged();
+            LoadTrip();
         }
     }
 
