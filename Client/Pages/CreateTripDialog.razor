@@ -2,17 +2,40 @@
 <MudDialog>
     <DialogContent>
         <MudTextField @bind-Value="_trip.Name" Label="Name" Variant="Variant.Outlined"></MudTextField>
-        <MudStack Row="false">
-            <MudText Typo="Typo.subtitle1">Shared With</MudText>
-            @foreach(User user in _sharedWith)
-            {
-                <MudStack Row="true">
-                    <MudAutocomplete T="User" Label="User" Variant="Variant.Outlined" SearchFunc="@Search" Value="user" ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"></MudAutocomplete>
-                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_sharedWith.Remove(user); StateHasChanged();}"></MudIconButton>
-                </MudStack>
-            }
-            <MudButton FullWidth="false" StartIcon="@Icons.Material.Filled.Add" OnClick="(e) => {_sharedWith.Add(new User()); StateHasChanged();}">Add User</MudButton>
-        </MudStack>
+        <MudTable Items="@_sharedWith">
+            <ToolBarContent>
+                <MudText Typo="Typo.subtitle1">Shared With</MudText>
+                <MudSpacer/>
+                <MudButton FullWidth="false" StartIcon="@Icons.Material.Filled.Add" OnClick="(e) => {_sharedWith.Add(new User()); StateHasChanged();}">Add User</MudButton>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh />
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">
+                    @context.DisplayName
+                </MudTd>
+                <MudTd DataLabel="Email">
+                    @context.email
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_sharedWith.Remove(context); StateHasChanged();}"></MudIconButton>
+                </MudTd>
+            </RowTemplate>
+            <RowEditingTemplate>
+                <MudTd DataLabel="Name">
+                    @context.DisplayName
+                </MudTd>
+                <MudTd DataLabel="Email">
+                    <MudAutocomplete T="string" Variant="Variant.Outlined" SearchFunc="@Search" Value="@context.email" ValueChanged="@(x => {context.DisplayName = Users.FirstOrDefault(y => y.email == x).DisplayName; context.email = x;})"></MudAutocomplete>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_sharedWith.Remove(context); StateHasChanged();}"></MudIconButton>
+                </MudTd>
+            </RowEditingTemplate>
+        </MudTable>
     </DialogContent>
      <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
@@ -58,13 +81,13 @@
         MudDialog.Close(DialogResult.Ok(_trip));
     }
 
-    private async Task<IEnumerable<User>> Search(string value)
+    private async Task<IEnumerable<string>> Search(string value)
     {
        if (string.IsNullOrEmpty(value))
         {
-            return Users;
+            return Users.Select(x => x.email);
         }
         return Users.Where(x => x.email.Contains(value, StringComparison.OrdinalIgnoreCase)
-            || x.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
+            || x.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(x => x.email);
     }
 }
