@@ -1,14 +1,58 @@
-# Blazor Starter Application
-
-This template contains an example .NET 7 [Blazor WebAssembly](https://docs.microsoft.com/aspnet/core/blazor/?view=aspnetcore-6.0#blazor-webassembly) client application, a .NET 7 C# [Azure Functions](https://docs.microsoft.com/azure/azure-functions/functions-overview), and a C# class library with shared code.
-
-> Note: Azure Functions only supports .NET 7 in the isolated process execution model
+# SyncOwe
 
 ## Getting Started
 
-1. Create a repository from the [GitHub template](https://docs.github.com/en/enterprise/2.22/user/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) and then clone it locally to your machine.
+### Setting up database
 
-1. In the **ApiIsolated** folder, copy `local.settings.example.json` to `local.settings.json`
+1. Install [CosmosDB Emulator](https://learn.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21)
+
+1. Launch the emulator page in a web browser
+
+1. In the Explorer tab click New Container
+
+1. Under Database id select Create new and type in `syncowe`
+
+1. Under Container id type in `Trips`
+
+1. Under Partition key type in `/id`, then click OK
+
+1. Select New Container again, but this time choose Use existing and select syncowe
+
+1. Under Contianer id type in `Users`
+
+1. Under Partition key type in `/email`
+
+1. Add a unique key and enter `/email`, then click OK
+
+### Connecting to local database
+
+1. In the **Api** folder, create a `local.settings.json`. 
+
+1. Insert the following into this file:
+```
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*",
+    "CORSCredentials": false
+  },
+  "ConnectionStrings": {
+    "CosmosDBConnection": {
+      "ConnectionString": "TBD",
+      "ProviderName": "System.Data.SqlClient"
+    }
+  }
+}
+```
+
+1. Go to your cosmosDB emulator in a web browser, select the QuickStart tab.
+
+1. Copy the Primary Connection String and paste it into the file where TBD is.
 
 1. Continue using either Visual Studio or Visual Studio Code.
 
@@ -50,7 +94,3 @@ Once you clone the project, open the solution in the latest release of [Visual S
 - **Client**: The Blazor WebAssembly sample application
 - **Api**: A C# Azure Functions API, which the Blazor application will call
 - **Shared**: A C# class library with a shared data model between the Blazor and Functions application
-
-## Deploy to Azure Static Web Apps
-
-This application can be deployed to [Azure Static Web Apps](https://docs.microsoft.com/azure/static-web-apps), to learn how, check out [our quickstart guide](https://aka.ms/blazor-swa/quickstart).
