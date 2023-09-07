@@ -10,6 +10,7 @@
     <MudAppBar>
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         SyncOwe
+        <MudSpacer/>
         <LoginDisplay />
     </MudAppBar>
     <MudDrawer @bind-Open="@_drawerOpen">
@@ -53,23 +54,10 @@
     protected override async Task OnParametersSetAsync()
     {
         var user = (await AuthState).User;
-        if (user.Identity.IsAuthenticated)
+        if (user?.Identity.IsAuthenticated == true)
         {
             UpdateUser(user.Identities.First().Claims.FirstOrDefault(x => x.Type == "preferred_username").Value, user.Identity.Name);
         }
-    }
-
-    protected async override Task OnInitializedAsync()
-    {
-        base.OnInitialized();
-
-        
-        //if (!user.Identity.IsAuthenticated)
-        //{
-        //    NavigationManager.NavigateTo($"authentication/login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}");
-        //}
-        //UpdateUser(user.Identities.First().Claims.FirstOrDefault(x => x.Type == "preferred_username").Value, user.Identity.Name);
-        
     }
 
     void DrawerToggle()

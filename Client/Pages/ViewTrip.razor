@@ -4,22 +4,22 @@
 
 @if(_trip == null)
 {
-    <MudProgressCircular Indeterminate="true">Loading...</MudProgressCircular>
+    <MudProgressCircular Indeterminate="true" Class="mx-auto">Loading...</MudProgressCircular>
 }
 else if (_trip.id != _id)
 {
-    <MudText Typo="Typo.h6" Color="Color.Error">Error: Could not find trip.</MudText>
+    <MudText Typo="Typo.h6" Color="Color.Error" Class="mx-auto">Error: Could not find trip.</MudText>
 }
 else
 {
-    <MudStack Row="true" Justify="Justify.SpaceBetween">
-        <MudText Typo="Typo.h2">@_trip.Name</MudText>
+    <MudStack Row="true" Justify="Justify.SpaceBetween" Class="pa-6">
+        <MudText Typo="Typo.h3">@_trip.Name</MudText>
         <MudStack Row="true">
             @if(_trip.Owner == CurrentUser.email)
             {
-                <MudButton Variant="Variant.Filled" OnClick="@((e) => EditTrip())">Edit Trip</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="@((e) => EditTrip())">Edit Trip</MudButton>
             }
-            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@((e) => CreateTransaction())">Add New Transaction</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Add" OnClick="@((e) => CreateTransaction())">New Transaction</MudButton>
         </MudStack>
     </MudStack>
     @if (_trip.Transactions.Any())
@@ -41,7 +41,7 @@ else
                 <MudTd DataLabel="Payer">@Users.FirstOrDefault(x => x.email == context.Payer).DisplayName</MudTd>
                 <MudTd DataLabel="Total">$@context.Total</MudTd>
                 <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Launch" Color="Color.Success" OnClick="@((e) => UpdateTransaction(context))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Success" OnClick="@((e) => UpdateTransaction(context))"/>
                 </MudTd>
             </RowTemplate>
         </MudTable>
@@ -92,8 +92,9 @@ else
 
     private async void CreateTransaction()
     {
+        DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true };
         var parameters = new DialogParameters < CreateTransactionDialog>{{ x => x.Users, Users}};
-        var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("New Transaction", parameters);
+        var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("New Transaction", parameters, options);
         var result = await dialog.Result;
 
         if (!result.Canceled && result.Data is Transaction transaction)
@@ -107,9 +108,9 @@ else
     private async void UpdateTransaction(Transaction transaction)
     {
         int index = _trip.Transactions.IndexOf(transaction);
-
+        DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true };
         var parameters = new DialogParameters<CreateTransactionDialog> { { x => x.Users, Users }, { x => x.Transaction, transaction} };
-        var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("Edit Transaction", parameters);
+        var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("Edit Transaction", parameters, options);
         var result = await dialog.Result;
 
         if (!result.Canceled && result.Data is Transaction newTransaction)

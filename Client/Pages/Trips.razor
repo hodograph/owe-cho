@@ -3,18 +3,21 @@
 @inject IDialogService DialogService
 @inject NavigationManager NavigationManager
 
-<MudStack Row="true" Justify="Justify.SpaceBetween">
+<MudStack Row="true" Justify="Justify.SpaceBetween" Class="pa-6">
     <MudText Typo="Typo.h3">Trips</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@((e) => CreateTrip())">Start New Trip</MudButton>
+    @if (Type != "Archived")
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@((e) => CreateTrip())">Start New Trip</MudButton>
+    }
 </MudStack>
 
 @if (_trips == null)
 {
-    <MudProgressCircular Indeterminate="true">Loading...</MudProgressCircular>
+    <MudProgressCircular Indeterminate="true" Class="mx-auto">Loading...</MudProgressCircular>
 }
 else if(_trips.Count() == 0)
 {
-    <MudText Typo="Typo.body1">There are no trips.</MudText>
+    <MudText Typo="Typo.body1" Class="mx-auto">There are no trips.</MudText>
 }
 else
 {
