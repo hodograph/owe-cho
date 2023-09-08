@@ -16,8 +16,8 @@ namespace BlazorApp.Shared
 
         public const string EMAIL_ClAIM_NAME = "preferred_username";
 
-        public const string SEND_PAYMENT_LINK = "https://venmo.com/?txn=pay&audience=public&recipients={0}&amount={1}&note={2}";
+        public const string SEND_PAYMENT_LINK = "https://venmo.com/{0}?txn=pay&audience=public&amount={1}&note={2}";
 
-        public const string REQUEST_PAYMENT_LINK = "https://venmo.com/?txn=charge&audience=public&recipients={0}&amount={1}&note={2}";
+        public const string REQUEST_PAYMENT_LINK = "https://venmo.com/{0}?txn=charge&audience=public&amount={1}&note={2}";
     }
 }

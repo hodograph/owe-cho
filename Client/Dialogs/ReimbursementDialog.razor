@@ -1,0 +1,76 @@
+﻿
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Create Reimbursement
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Row="true">
+            <MudAutocomplete 
+                T="User" 
+                Label="Payer" 
+                Variant="Variant.Outlined" 
+                SearchFunc="@Search" 
+                @bind-Value="_payer" 
+                ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"/>
+
+            <MudAutocomplete 
+                T="User"
+                Label="Recipient"
+                Variant="Variant.Outlined"
+                SearchFunc="@Search"
+                @bind-Value="_recipient"
+                ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")" />
+
+            <MudNumericField 
+                @bind-Value="Reimbursement.Amount" 
+                Label="Amount" 
+                Variant="Variant.Outlined" 
+                Adornment="Adornment.Start" 
+                AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Success" OnClick="Add">Submit</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code
+{
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    public Reimbursement Reimbursement { get; set; } = new Reimbursement();
+
+    [Parameter]
+    public User[] Users { get; set; }
+
+    private User _payer;
+
+    private User _recipient;
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Add()
+    {
+        Reimbursement.ReimbursementId = Guid.NewGuid();
+        Reimbursement.Payer = _payer.email;
+        Reimbursement.Recipient = _recipient.email;
+
+        MudDialog.Close(DialogResult.Ok(Reimbursement));
+    }
+
+    private async Task<IEnumerable<User>> Search(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return Users;
+        }
+        return Users.Where(x => x.email.Contains(value, StringComparison.OrdinalIgnoreCase)
+            || x.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+}

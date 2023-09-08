@@ -17,14 +17,15 @@ namespace BlazorApp.Shared
 
         public List<Debt> Debts { get; set; } = new List<Debt>();
 
+        public bool ProportionalSplit { get; set; }
+
         public List<Debt> CalculatePayments()
         {
             List<Debt> debts = new List<Debt>();
 
             Debts.ForEach(x => debts.Add(new Debt() { Amount = x.Amount, Debtor = x.Debtor }));
 
-            double debtsTotal = 0;
-            debts.ForEach(x => debtsTotal += x.Amount);
+            double debtsTotal = debts.Select(x => x.Amount).Sum();
             double remainder = Total - debtsTotal;
 
             if (!debts.Any(x => x.Debtor == Payer))
@@ -36,8 +37,20 @@ namespace BlazorApp.Shared
                 });
             }
 
-            double remainingSplit = remainder / debts.Count;
-            debts.ForEach(x => x.Amount += remainingSplit);
+            if (ProportionalSplit)
+            {
+                foreach(Debt debt in debts)
+                {
+                    double proportionPercent = debt.Amount / debtsTotal;
+                    double proportion = remainder * proportionPercent;
+                    debt.Amount += proportion;
+                }
+            }
+            else
+            {
+                double remainingSplit = remainder / debts.Count;
+                debts.ForEach(x => x.Amount += remainingSplit);
+            }
 
             return debts;
         }

@@ -13,7 +13,9 @@
 
 @if (_trips == null)
 {
-    <MudProgressCircular Indeterminate="true" Class="mx-auto">Loading...</MudProgressCircular>
+    <MudStack Row="true" Justify="Justify.Center" Class="pa-6" AlignItems="AlignItems.Center">
+        <MudProgressCircular Indeterminate="true" Class="mx-auto">Loading...</MudProgressCircular>
+    </MudStack>
 }
 else if(_trips.Count() == 0)
 {
@@ -66,6 +68,7 @@ else
 
     private async void CreateTrip()
     {
+        await LoadTrips();
         var parameters = new DialogParameters<CreateTripDialog> { { x => x.Users, Users } };
         var dialog = await DialogService.ShowAsync<CreateTripDialog>("Start New Trip", parameters);
         var result = await dialog.Result;
@@ -74,7 +77,7 @@ else
         {
             trip.Owner = CurrentUser.email;
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", trip);
-            LoadTrips();
+            await LoadTrips();
         }
     }
 

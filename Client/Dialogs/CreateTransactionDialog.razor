@@ -8,9 +8,23 @@
     <DialogContent>
         <MudTextField @bind-Value="_transaction.TransactionName" Label="Name" Variant="Variant.Outlined"></MudTextField>
 
-        <MudAutocomplete T="User" Label="Payer" Variant="Variant.Outlined" T="string" SearchFunc="@Search" @bind-Value="_payer" ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"></MudAutocomplete>
+        <MudAutocomplete T="User" Label="Payer" Variant="Variant.Outlined" SearchFunc="@Search" @bind-Value="_payer" ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"></MudAutocomplete>
 
         <MudNumericField @bind-Value="_transaction.Total" Label="Total" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney"></MudNumericField>
+        <MudTooltip>
+            <ChildContent>
+                <MudSwitch @bind-Checked="_transaction.ProportionalSplit" Label="Proportionally Split Remainder" Color="Color.Primary" />
+            </ChildContent>
+            <TooltipContent>
+                <MudStack AlignItems="AlignItems.Start">
+                    <MudText Typo="Typo.body1">Unchecked: The remaining balance will be split evenly among debtors and payer</MudText>
+                    <MudText Typo="Typo.body1">(Amount is treated as an offset in this scenario)</MudText>
+                    <MudSpacer/>
+                    <MudText Typo="Typo.body1">Checked: The remaining balance will be split proportionally by amount paid among debtors</MudText>
+                    <MudText Typo="Typo.body1">(Payer should also be a debtor in this scenario)</MudText>
+                </MudStack>
+            </TooltipContent>
+        </MudTooltip>
         <MudTable Items="@_transaction.Debts">
             <ToolBarContent>
                 <MudText Typo="Typo.subtitle1">Debts</MudText>
