@@ -147,7 +147,8 @@ else
                                 <MudTooltip Text="@(string.IsNullOrWhiteSpace(kvp.Key.VenmoId) ? $"{kvp.Key.DisplayName} doesn't have their Venmo ID setup." : "Send On Venmo")">
                                     <MudIconButton 
                                         Icon="@Icons.Material.Filled.AttachMoney" 
-                                        Variant="Variant.Filled" 
+                                        Variant="Variant.Filled"
+                                        Color="Color.Success"
                                         OnClick="@(e => SendRequest(@kvp.Key, @kvp.Value))" 
                                         Disabled="@string.IsNullOrWhiteSpace(kvp.Key.VenmoId)"/>
                                 </MudTooltip>
@@ -169,7 +170,8 @@ else
                                 <MudTooltip Text="@(string.IsNullOrWhiteSpace(kvp.Key.VenmoId) ? $"{kvp.Key.DisplayName} doesn't have their Venmo ID setup." : "Send On Venmo")">
                                     <MudIconButton 
                                         Icon="@Icons.Material.Filled.AttachMoney" 
-                                        Variant="Variant.Filled" 
+                                        Variant="Variant.Filled"
+                                        Color="Color.Success"
                                         OnClick="@(e => SendPayment(@kvp.Key, @kvp.Value))" 
                                         Disabled="@string.IsNullOrWhiteSpace(kvp.Key.VenmoId)" />
                                 </MudTooltip>
@@ -207,6 +209,11 @@ else
                 <MudText Typo="Typo.h6">Transactions</MudText>
                 <MudSpacer />
                 <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                @if (_trip.TripState == TripState.Live || _trip.Indefinite)
+                {
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="@(e => CreateTransaction())" Color="Color.Success">Add Transaction</MudButton>
+                }
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Transaction Name</MudTh>
@@ -492,7 +499,6 @@ else
 
     private async void CreateTransaction()
     {
-        await LoadTrip();
         DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true };
         var parameters = new DialogParameters<CreateTransactionDialog> { { x => x.Users, GetTripUsers() } };
         var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("New Transaction", parameters, options);
@@ -500,6 +506,7 @@ else
 
         if (!result.Canceled && result.Data is Transaction transaction)
         {
+            await LoadTrip();
             _trip.Transactions.Add(transaction);
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
             await LoadTrip();
@@ -518,6 +525,7 @@ else
 
         if (!result.Canceled && result.Data is Transaction newTransaction)
         {
+            await LoadTrip();
             _trip.Transactions[index] = newTransaction;
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
             await LoadTrip();
@@ -526,7 +534,6 @@ else
 
     private async void AddReimbursement()
     {
-        await LoadTrip();
         DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true };
         var parameters = new DialogParameters<ReimbursementDialog> { { x => x.Users, GetTripUsers() } };
         var dialog = await DialogService.ShowAsync<ReimbursementDialog>("New Transaction", parameters, options);
@@ -534,6 +541,7 @@ else
 
         if (!result.Canceled && result.Data is Reimbursement reimbursement)
         {
+            await LoadTrip();
             _trip.Reimbursements.Add(reimbursement);
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
             await LoadTrip();
@@ -571,12 +579,12 @@ else
 
     private async void SendToPayment()
     {
-        await LoadTrip();
         var parameters = new DialogParameters<ConfirmationDialog> { { x => x.Message, "Send to payments stage? You will no longer be able to add transactions." } };
         var dialog = await DialogService.ShowAsync<ConfirmationDialog>("Send To Payments", parameters);
         var result = await dialog.Result;
         if (!result.Cancelled)
         {
+            await LoadTrip();
             _trip.TripState = TripState.Payment;
             await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
             await LoadTrip();
