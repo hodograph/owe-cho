@@ -1,0 +1,31 @@
+﻿@page "/Profile"
+@inject HttpClient Http
+
+@if(CurrentUser != null)
+{
+    <MudStack AlignItems="AlignItems.Center">
+        <MudTextField @bind-Value="CurrentUser.DisplayName" Variant="Variant.Outlined" Label="Display Name"/>
+
+        <MudTextField @bind-Value="CurrentUser.VenmoId" Variant="Variant.Outlined" Label="VenmoId" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AlternateEmail" />
+        <MudButton OnClick="@Save">Save</MudButton>
+    </MudStack>
+}
+
+
+@code 
+{
+    [CascadingParameter]
+    public User CurrentUser { get; set; }
+
+    public async Task Save()
+    {
+        try
+        {
+            await Http.PutAsJsonAsync<User>("/api/SetUser", CurrentUser);
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+    }
+}

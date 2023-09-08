@@ -2,6 +2,7 @@
 <MudDialog>
     <DialogContent>
         <MudTextField @bind-Value="_trip.Name" Label="Name" Variant="Variant.Outlined"></MudTextField>
+        <MudSwitch @bind-Checked="_trip.Indefinite" Label="Indefinite Trip"/>
         <MudTable Items="@_sharedWith">
             <ToolBarContent>
                 <MudText Typo="Typo.subtitle1">Shared With</MudText>

@@ -1,11 +1,11 @@
-﻿@page "/Trips/{type}"
+﻿@page "/Trips/{TripState}"
 @inject HttpClient Http
 @inject IDialogService DialogService
 @inject NavigationManager NavigationManager
 
 <MudStack Row="true" Justify="Justify.SpaceBetween" Class="pa-6">
     <MudText Typo="Typo.h3">Trips</MudText>
-    @if (Type != "Archived")
+    @if (_tripState == BlazorApp.Shared.TripState.Live)
     {
         <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@((e) => CreateTrip())">Start New Trip</MudButton>
     }
@@ -41,8 +41,13 @@ else
 }
 
 @code {
+    private TripState _tripState;
     [Parameter] 
-    public string? Type { get; set; }
+    public string TripState 
+    {
+        get => _tripState.ToString();
+        set => _tripState = (TripState)Enum.Parse(typeof(TripState), value);
+    }
 
     private Trip[] _trips = null;
 
@@ -78,7 +83,7 @@ else
         try
         {
             _trips = await Http.GetFromJsonAsync<Trip[]>($"/api/trips/{CurrentUser.email}") ?? new Trip[] { };
-            _trips = _trips.Where(x => x.Archived == (Type == "Archived")).ToArray();
+            _trips = _trips.Where(x => x.TripState == _tripState).ToArray();
             StateHasChanged();
         }
         catch (Exception ex)

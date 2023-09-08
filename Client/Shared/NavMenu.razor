@@ -1,7 +1,8 @@
 ﻿<MudNavMenu>
     <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
     <MudNavGroup Title="Trips" Expanded="true">
-        <MudNavLink Href="/Trips/Active"  Match="NavLinkMatch.Prefix">Active Trips</MudNavLink>
-        <MudNavLink Href="/Trips/Archived"  Match="NavLinkMatch.Prefix">Archived</MudNavLink>
+        <MudNavLink Href="@($"/Trips/{TripState.Live}")"  Match="NavLinkMatch.Prefix">Active Trips</MudNavLink>
+        <MudNavLink Href="@($"/Trips/{TripState.Payment}")" Match="NavLinkMatch.Prefix">Trips In Payment</MudNavLink>
+        <MudNavLink Href="@($"/Trips/{TripState.Archived}")"  Match="NavLinkMatch.Prefix">Archived Trips</MudNavLink>
     </MudNavGroup>
 </MudNavMenu>

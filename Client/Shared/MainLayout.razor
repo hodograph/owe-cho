@@ -21,6 +21,12 @@
         <CascadingValue Value="@CurrentUser">
             <CascadingValue Value="@Users">
                 <MudContainer MaxWidth="MaxWidth.Large"> 
+                    @if (CurrentUser != null && string.IsNullOrWhiteSpace(CurrentUser.VenmoId))
+                    {
+                        <MudStack Row="true" Justify="Justify.Center">
+                            <MudAlert Severity="Severity.Warning">Setup your Venmo ID so people can pay you! <MudButton Color="Color.Warning" OnClick="@NavigateToProfile">Setup</MudButton></MudAlert>
+                        </MudStack>
+                    }
                     @Body
                 </MudContainer>
             </CascadingValue>
@@ -63,6 +69,11 @@
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
+    }
+
+    private void NavigateToProfile()
+    {
+        NavigationManager.NavigateTo("/Profile");
     }
 
     private async void UpdateUser(string email, string name)

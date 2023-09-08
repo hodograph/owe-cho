@@ -4,11 +4,10 @@ using System.Text;
 
 namespace BlazorApp.Shared
 {
-    public enum TransactionType 
-    { 
-        EvenSplit,
-        CustomSplit,
-        Restaurant
+    public enum TripState
+    {
+        Live,
+        Payment,
+        Archived
     }
-
 }

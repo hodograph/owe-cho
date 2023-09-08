@@ -13,6 +13,9 @@ namespace BlazorApp.Shared
 
         public List<Transaction> Transactions { get; set; } = new List<Transaction>();
 
-        public bool Archived { get; set; }
+        public List<Reimbursement> Reimbursements { get; set; } = new List<Reimbursement>();
+
+        public TripState TripState { get; set; }
+        public bool Indefinite { get; set; }
     }
 }

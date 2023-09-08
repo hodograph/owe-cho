@@ -10,6 +10,13 @@ namespace BlazorApp.Shared
 
         public string DisplayName { get; set; } = string.Empty;
 
+        public string VenmoId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Unique ID in DB. Don't change or mess with.
+        /// </summary>
+        public string id { get; set; }
+
         public override bool Equals(object obj)
         {
             bool equal = false;

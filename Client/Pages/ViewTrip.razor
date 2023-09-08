@@ -1,6 +1,7 @@
 ﻿@page "/Trip/{id}"
 @inject HttpClient Http
 @inject IDialogService DialogService
+@inject NavigationManager Navigation
 
 @if(_trip == null)
 {
@@ -20,21 +21,36 @@ else
     <MudStack Row="true" Justify="Justify.SpaceBetween" Class="pa-6">
         <MudText Typo="Typo.h3">@_trip.Name</MudText>
         <MudStack Row="true">
-            @if(_trip?.Owner == CurrentUser?.email)
+            @if(_trip.Owner == CurrentUser?.email)
             {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="@((e) => EditTrip())">Edit Trip</MudButton>
+                if (_trip.TripState == TripState.Live)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="@((e) => EditTrip())">Edit Trip</MudButton>
+
+                    if(!_trip.Indefinite)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Money" OnClick="@((e) => SendToPayment())">Send To Payments</MudButton>
+                    }
+                }
+                else if(_trip.TripState == TripState.Payment)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Archive" OnClick="@((e) => Archive())">Archive Trip</MudButton>
+                }
             }
-            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Add" OnClick="@((e) => CreateTransaction())">New Transaction</MudButton>
+            @if (_trip.TripState == TripState.Live)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Add" OnClick="@((e) => CreateTransaction())">New Transaction</MudButton>
+            }
         </MudStack>
     </MudStack>
     @if (_trip.Transactions.Any())
     {
         <MudDivider DividerType="DividerType.Middle" Class="my-6" />
         <MudText Typo="Typo.h4">Personal Stats</MudText>
-        <MudStack Row="true" Justify="Justify.SpaceEvenly" Class="pa-6">
+        <MudStack Row="true" Justify="Justify.SpaceAround" Class="pa-6">
             <MudPaper>
                 <MudStack AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.h6">Owed To You</MudText>
+                    <MudText Typo="Typo.h6">You've Spent</MudText>
                     <MudChart 
                         ChartType="ChartType.Donut" 
                         InputData="@_personalSpentStats.Values.ToArray()" 
@@ -54,7 +70,7 @@ else
             </MudPaper>
             <MudPaper>
                 <MudStack AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.h6">You Owe</MudText>
+                    <MudText Typo="Typo.h6">Spent on You</MudText>
                     <MudChart 
                         ChartType="ChartType.Donut" 
                         InputData="@_personalDebtStats.Values.ToArray()" 
@@ -74,6 +90,52 @@ else
                 </MudStack>
             </MudPaper>
         </MudStack>
+
+        @if(_trip.TripState == TripState.Payment || _trip.Indefinite)
+        {
+            <MudStack Row="true" Justify="Justify.SpaceAround" Class="pa-6">
+                <MudPaper>
+                    <MudStack AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">Request</MudText>
+                        @foreach(KeyValuePair<User, double> kvp in _simplifiedRequests)
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="pa-6">
+                                <MudText>@kvp.Key.DisplayName: $@kvp.Value</MudText>
+                                <MudIconButton 
+                                    Icon="@Icons.Material.Filled.AttachMoney" 
+                                    Variant="Variant.Filled" 
+                                    OnClick="@(e => SendRequest(@kvp.Key, @kvp.Value))" 
+                                    Disabled="@string.IsNullOrWhiteSpace(kvp.Key.VenmoId)"/>
+                            </MudStack>
+                        }
+                        @if (!_simplifiedRequests.Any())
+                        {
+                            <MudText Class="pa-6">Nobody Owes You Money</MudText>
+                        }
+                    </MudStack>
+                </MudPaper>
+                <MudPaper>
+                    <MudStack AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">Send</MudText>
+                        @foreach (KeyValuePair<User, double> kvp in _simplifiedPayments)
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="pa-6">
+                                <MudText>@kvp.Key.DisplayName: $@kvp.Value</MudText>
+                                <MudIconButton 
+                                    Icon="@Icons.Material.Filled.AttachMoney" 
+                                    Variant="Variant.Filled" 
+                                    OnClick="@(e => SendPayment(@kvp.Key, @kvp.Value))" 
+                                    Disabled="@string.IsNullOrWhiteSpace(kvp.Key.VenmoId)" />
+                            </MudStack>
+                        }
+                        @if (!_simplifiedPayments.Any())
+                        {
+                            <MudText Class="pa-6">You Owe Nobody</MudText>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudStack>
+        }
 
         <MudDivider DividerType="DividerType.Middle" Class="my-6" />
         <MudText Typo="Typo.h4">Trip Stats</MudText>
@@ -129,6 +191,33 @@ else
                 </MudTd>
             </RowTemplate>
         </MudTable>
+
+        @if(_trip.TripState == TripState.Payment || _trip.Indefinite)
+        {
+            <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+            <MudTable Items="@_trip.Reimbursements">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Reimbursements</MudText>
+                    <MudSpacer />
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Payer</MudTh>
+                    <MudTh>Recipient</MudTh>
+                    <MudTh>Amount</MudTh>
+                    <MudTh />
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Payer">@Users?.FirstOrDefault(x => x.email == context.Payer).DisplayName</MudTd>
+                    <MudTd DataLabel="Recipient">@Users?.FirstOrDefault(x => x.email == context.Recipient).DisplayName</MudTd>
+                    <MudTd DataLabel="Total">$@context.Amount</MudTd>
+                    <MudTd>
+                        @if(CurrentUser.email == context.Recipient){
+                            <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" OnClick="@((e) => context.Confirmed = true)" Disabled="@context.Confirmed"/>
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
     }
     else
     {
@@ -155,6 +244,10 @@ else
     private Dictionary<User, double> _personalSpentStats = new Dictionary<User, double>();
 
     private Dictionary<User, double> _personalDebtStats = new Dictionary<User, double>();
+
+    private Dictionary<User, double> _simplifiedPayments = new Dictionary<User, double>();
+
+    private Dictionary<User, double> _simplifiedRequests = new Dictionary<User, double>();
 
     private int _personalSpentIndex = -1;
 
@@ -185,6 +278,8 @@ else
             _personalDebtStats.Clear();
             _personalSpentIndex = -1;
             _personalDebtIndex = -1;
+            _simplifiedPayments.Clear();
+            _simplifiedRequests.Clear();
             foreach(Transaction transaction in _trip.Transactions)
             {
                 User spender = UserFromEmail(transaction.Payer);
@@ -211,6 +306,72 @@ else
                     }
                 }
             }
+
+            foreach(KeyValuePair<User, double> spent in _personalSpentStats)
+            {
+                double debt = 0;
+                if (_personalDebtStats.ContainsKey(spent.Key))
+                {
+                    debt = _personalDebtStats[spent.Key];
+                }
+
+                debt -= spent.Value;
+
+                if(debt > 0)
+                {
+                    InitOrAddDebt(ref _simplifiedPayments, debt, spent.Key);
+                }
+                else if(debt < 0)
+                {
+                    InitOrAddDebt(ref _simplifiedRequests, debt, spent.Key);
+                }
+            }
+
+            foreach(KeyValuePair<User, double> owed in _personalDebtStats.Where(x => !_personalSpentStats.ContainsKey(x.Key)))
+            {
+                InitOrAddDebt(ref _simplifiedRequests, owed.Value, owed.Key);
+            }
+
+            foreach(Reimbursement reimbursement in _trip.Reimbursements.Where(x => x.Payer == CurrentUser.email || x.Recipient == CurrentUser.email))
+            {
+                if(reimbursement.Payer == CurrentUser.email)
+                {
+                    User recipient = UserFromEmail(reimbursement.Recipient);
+                    double debt = _simplifiedPayments[recipient];
+                    debt -= reimbursement.Amount;
+                    if(debt == 0)
+                    {
+                        _simplifiedPayments.Remove(recipient);
+                    }
+                    else if(debt < 0)
+                    {
+                        InitOrAddDebt(ref _simplifiedRequests, debt * -1, recipient);
+                    }
+                    else
+                    {
+                        _simplifiedPayments[recipient] = debt;
+                    }
+                }
+                else if(reimbursement.Recipient == CurrentUser.email)
+                {
+                    User payer = UserFromEmail(reimbursement.Recipient);
+                    double spent = _simplifiedRequests[payer];
+                    spent -= reimbursement.Amount;
+                    if (spent == 0)
+                    {
+                        _simplifiedRequests.Remove(payer);
+                    }
+                    else if (spent < 0)
+                    {
+                        InitOrAddDebt(ref _simplifiedPayments, spent * -1, payer);
+                    }
+                    else
+                    {
+                        _simplifiedRequests[payer] = spent;
+                    }
+                }
+            }
+
             StateHasChanged();
         }
         catch (Exception ex)
@@ -290,6 +451,20 @@ else
         }
     }
 
+    private async void SendToPayment()
+    {
+        _trip.TripState = TripState.Payment;
+        await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+        LoadTrip();
+    }
+
+    private async void Archive()
+    {
+        _trip.TripState = TripState.Archived;
+        await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+        LoadTrip();
+    }
+
     private bool FilterFunc(Transaction transaction) => FilterFunc(transaction, _searchString);
 
     private bool FilterFunc(Transaction transaction, string searchString)
@@ -301,5 +476,33 @@ else
         if (transaction.Payer.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             return true;
         return false;
+    }
+
+    private async Task SendPayment(User recipient, double amount)
+    {
+        _trip.Reimbursements.Add(new Reimbursement()
+            {
+                Recipient = recipient.email,
+                Payer = CurrentUser.email,
+                Amount = amount
+            });
+
+        await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+
+        Navigation.NavigateTo(string.Format(Constants.SEND_PAYMENT_LINK, recipient.VenmoId, amount, _trip.Name));
+    }
+
+    private async Task SendRequest(User debtor, double amount)
+    {
+        _trip.Reimbursements.Add(new Reimbursement()
+            {
+                Recipient = CurrentUser.email,
+                Payer = debtor.email,
+                Amount = amount
+            });
+
+        await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+
+        Navigation.NavigateTo(string.Format(Constants.REQUEST_PAYMENT_LINK, debtor.VenmoId, amount, _trip.Name));
     }
 }
