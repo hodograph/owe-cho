@@ -7,7 +7,7 @@
         <MudTextField @bind-Value="CurrentUser.DisplayName" Variant="Variant.Outlined" Label="Display Name"/>
 
         <MudTextField @bind-Value="CurrentUser.VenmoId" Variant="Variant.Outlined" Label="VenmoId" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AlternateEmail" />
-        <MudButton OnClick="@Save">Save</MudButton>
+        <MudButton OnClick="@Save" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save">Save</MudButton>
     </MudStack>
 }
 
@@ -22,6 +22,7 @@
         try
         {
             await Http.PutAsJsonAsync<User>("/api/SetUser", CurrentUser);
+            StateHasChanged();
         }
         catch(Exception ex)
         {
