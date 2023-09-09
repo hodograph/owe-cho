@@ -9,7 +9,7 @@
         <MudProgressCircular Indeterminate="true" Class="mx-auto">Loading...</MudProgressCircular>
     </MudStack>
 }
-else if (_trip.id != _id)
+else if (_trip.id != _id || !_trip.SharedWith.Append(_trip.Owner).Contains(CurrentUser?.email))
 {
     
     <MudStack Row="true" Justify="Justify.Center" Class="pa-6" AlignItems="AlignItems.Center">
