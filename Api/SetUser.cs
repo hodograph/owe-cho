@@ -1,7 +1,10 @@
-﻿using BlazorApp.Shared;
+﻿using Azure;
+using BlazorApp.Shared;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Api
@@ -24,7 +27,15 @@ namespace Api
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            return user;
+            ClaimsPrincipal claim = ClaimsPrincipalParser.ParsePrincipal(req);
+            if (user.email == claim.Identity.Name)
+            {
+                return user;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }

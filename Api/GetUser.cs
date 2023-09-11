@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace Api
 {
@@ -30,8 +31,20 @@ namespace Api
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            response.WriteAsJsonAsync(users.FirstOrDefault());
+            HttpResponseData response;
+
+            User user = users.FirstOrDefault();
+
+            ClaimsPrincipal claim = ClaimsPrincipalParser.ParsePrincipal(req);
+            if (user.email == claim.Identity.Name)
+            {
+                response = req.CreateResponse(HttpStatusCode.OK);
+                response.WriteAsJsonAsync(user);
+            }
+            else
+            {
+                response = req.CreateResponse(HttpStatusCode.NotFound);
+            }
 
             return response;
         }

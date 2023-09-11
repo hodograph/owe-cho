@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Reflection.Metadata;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using BlazorApp.Shared;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
@@ -27,7 +30,17 @@ namespace Api
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            return trip;
+            HttpResponseData response;
+
+            ClaimsPrincipal claim = ClaimsPrincipalParser.ParsePrincipal(req);
+            if (trip.SharedWith.Append(trip.Owner).Contains(claim.Identity.Name))
+            {
+                return trip;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using BlazorApp.Shared;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -25,8 +27,18 @@ namespace Api
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            response.WriteAsJsonAsync(trips);
+            HttpResponseData response;
+
+            ClaimsPrincipal claim = ClaimsPrincipalParser.ParsePrincipal(req);
+            if (!string.IsNullOrWhiteSpace(claim.Identity.Name))
+            {
+                response = req.CreateResponse(HttpStatusCode.OK);
+                response.WriteAsJsonAsync(trips.Where(x => x.SharedWith.Append(x.Owner).Contains(claim.Identity.Name)));
+            }
+            else
+            {
+                response = req.CreateResponse(HttpStatusCode.NotFound);
+            }
 
             return response;
         }

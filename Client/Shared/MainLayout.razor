@@ -1,3 +1,4 @@
+@using System.Security.Claims;
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
@@ -6,20 +7,20 @@
 <MudDialogProvider/>
 <MudSnackbarProvider/>
 
-<MudLayout>
+<CascadingValue Value="@CurrentUser">
+    <MudLayout>
     <MudAppBar>
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudImage Src="SyncOwe.png"/>
         <MudText Typo="Typo.h3" Class="ml-3">SyncOwe</MudText>
         <MudSpacer/>
-        <LoginDisplay />
+        <LoginDisplay/>
     </MudAppBar>
     <MudDrawer @bind-Open="@_drawerOpen">
         <NavMenu />
         <MudSwitch @bind-Checked="@_isDarkMode" Color="Color.Primary" Class="ma-4" T="bool" Label="Toggle Light/Dark Mode" />
     </MudDrawer>
     <MudMainContent>
-        <CascadingValue Value="@CurrentUser">
             <CascadingValue Value="@Users">
                 <MudContainer MaxWidth="MaxWidth.Large"> 
                     @if (CurrentUser != null && string.IsNullOrWhiteSpace(CurrentUser.VenmoId))
@@ -28,16 +29,20 @@
                             <MudAlert Severity="Severity.Warning">Setup your Venmo ID so people can pay you! <MudButton Color="Color.Warning" OnClick="@NavigateToProfile">Setup</MudButton></MudAlert>
                         </MudStack>
                     }
+                    @if (CurrentUser != null && (string.IsNullOrWhiteSpace(CurrentUser.DisplayName) || CurrentUser.DisplayName == CurrentUser.email))
+                    {
+                        <MudStack Row="true" Justify="Justify.Center">
+                            <MudAlert Severity="Severity.Warning">Setup your Display Name so people know who you are! <MudButton Color="Color.Warning" OnClick="@NavigateToProfile">Setup</MudButton></MudAlert>
+                        </MudStack>
+                    }
                     @Body
                 </MudContainer>
             </CascadingValue>
-        </CascadingValue>
     </MudMainContent>
-</MudLayout>
+    </MudLayout>
+</CascadingValue>
 
 @code {
-
-    [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
 
     [CascadingParameter] protected User CurrentUser { get; set; }
 
@@ -58,12 +63,12 @@
         }
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
-        var user = (await AuthState).User;
-        if (user?.Identity.IsAuthenticated == true)
+        ClientPrincipal user = (await Http.GetFromJsonAsync<ClientPrincipalJson>("/.auth/me")).ClientPrincipal;
+        if (!string.IsNullOrWhiteSpace(user.UserId))
         {
-            UpdateUser(user.Identities.First().Claims.FirstOrDefault(x => x.Type == "preferred_username").Value, user.Identity.Name);
+            UpdateUser(user.UserId, user.UserDetails);
         }
     }
 
@@ -77,7 +82,7 @@
         NavigationManager.NavigateTo("/Profile");
     }
 
-    private async void UpdateUser(string email, string name)
+    private async void UpdateUser(string id, string email)
     {
         try
         {
@@ -94,8 +99,9 @@
                 {
                     CurrentUser = new User()
                         {
+                            id = id,
                             email = email,
-                            DisplayName = name
+                            DisplayName = email
                         };
                     await Http.PutAsJsonAsync<User>("/api/SetUser", CurrentUser);
                 }
