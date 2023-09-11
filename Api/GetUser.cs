@@ -36,7 +36,8 @@ namespace Api
             User user = users.FirstOrDefault();
 
             ClaimsPrincipal claim = ClaimsPrincipalParser.ParsePrincipal(req);
-            if (user.email == claim.Identity.Name)
+
+            if (user == null || user?.email == claim.Identity.Name)
             {
                 response = req.CreateResponse(HttpStatusCode.OK);
                 response.WriteAsJsonAsync(user);

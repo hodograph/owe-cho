@@ -3,8 +3,7 @@
 @inject NavigationManager Navigation
 
 <MudStack Row="true" AlignItems="AlignItems.Center">
-    <MudText> Hello, </MudText>
-    <MudButton class="nav-link btn btn-link" @onclick="EditProfile">@CurrentUser?.DisplayName</MudButton>
+    <MudButton class="nav-link btn btn-link" @onclick="EditProfile" StartIcon="@Icons.Material.Filled.Person">@CurrentUser?.DisplayName</MudButton>
     <MudButton class="nav-link btn btn-link" @onclick="BeginLogOut">Log out</MudButton>
 </MudStack>
 
