@@ -1,8 +1,9 @@
-﻿
+﻿@inject HttpClient Http
+
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            Create Transaction
+            Transaction
         </MudText>
     </TitleContent>
     <DialogContent>
@@ -25,7 +26,27 @@
                 </MudStack>
             </TooltipContent>
         </MudTooltip>
-        <MudTable Items="@_transaction.Debts">
+        <MudFileUpload T="IBrowserFile" Accept=".png, .jpg" MaximumFileCount="100" FilesChanged="UploadFile">
+            <ButtonTemplate>
+                <MudButton HtmlTag="label"
+                           Disabled="@_processingImage"
+                           Color="Color.Info"
+                           Variant="Variant.Filled"
+                           StartIcon="@Icons.Material.Filled.PhotoCamera"
+                           for="@context">
+                    @if (_processingImage)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Processing</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Populate From Receipt</MudText>
+                    }
+                </MudButton>
+            </ButtonTemplate>
+        </MudFileUpload>
+        <MudTable Items="@_transaction.Debts" RowEditCommit="(e) => StateHasChanged()" Class="my-6">
             <ToolBarContent>
                 <MudText Typo="Typo.subtitle1">Debts</MudText>
                 <MudSpacer />
@@ -33,6 +54,7 @@
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Debtor</MudTh>
+                <MudTh>Memo</MudTh>
                 <MudTh>Amount</MudTh>
                 <MudTh />
             </HeaderContent>
@@ -40,8 +62,11 @@
                 <MudTd DataLabel="Debtor">
                     @Users.FirstOrDefault(y => y.email == context.Debtor)?.DisplayName
                 </MudTd>
+                <MudTd DataLabel="Memo">
+                    @context.Memo
+                </MudTd>
                 <MudTd DataLabel="Amount">
-                    $ @context.Amount
+                    $@Math.Round(context.Amount, 2);
                 </MudTd>
                 <MudTd>
                     <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_transaction.Debts.Remove(context); StateHasChanged();}"></MudIconButton>
@@ -56,6 +81,9 @@
                         @bind-Value="context.Debtor"
                         ToStringFunc="@(x => Users.FirstOrDefault(y => y.email == x).DisplayName)"></MudAutocomplete>
                 </MudTd>
+                <MudTd DataLabel="Memo">
+                    <MudTextField @bind-Value="context.Memo"/>
+                </MudTd>
                 <MudTd DataLabel="Amount">
                     <MudNumericField @bind-Value="context.Amount" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney"></MudNumericField>
                 </MudTd>
@@ -63,6 +91,20 @@
                     <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_transaction.Debts.Remove(context); StateHasChanged();}"></MudIconButton>
                 </MudTd>
             </RowEditingTemplate>
+        </MudTable>
+        <MudSpacer/>
+        <MudTable Items="_transaction.CalculatePayments()">
+            <ToolBarContent>
+                <MudText Typo="Typo.subtitle1">Calculated Payments</MudText>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Debtor</MudTh>
+                <MudTh>Amount</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Debtor">@context.Debtor</MudTd>
+                <MudTd DataLabel="Amount">$@Math.Round(context.Amount, 2)</MudTd>
+            </RowTemplate>
         </MudTable>
     </DialogContent>
      <DialogActions>
@@ -91,6 +133,8 @@
     public User[] Users { get; set; }
 
     private User _payer;
+
+    private bool _processingImage = false;
 
     private void Cancel()
     {
@@ -126,5 +170,19 @@
         }
         return Users.Where(x => x.email.Contains(value, StringComparison.OrdinalIgnoreCase)
             || x.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(x => x.email);
+    }
+
+    private async void UploadFile(IBrowserFile file)
+    {
+        _processingImage = true;
+        HttpResponseMessage response = await Http.PutAsync("/api/receipt", new StreamContent(file.OpenReadStream(10240000)));
+        Transaction generated = await response.Content.ReadFromJsonAsync<Transaction>();
+        _transaction.ProportionalSplit = true;
+        _transaction.TransactionName = generated.TransactionName;
+        _transaction.Total = generated.Total;
+        _transaction.Debts.Clear();
+        _transaction.Debts.AddRange(generated.Debts);
+        _processingImage = false;
+        StateHasChanged();
     }
 }

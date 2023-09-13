@@ -499,7 +499,7 @@ else
 
     private async void CreateTransaction()
     {
-        DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true };
+        DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
         var parameters = new DialogParameters<CreateTransactionDialog> { { x => x.Users, GetTripUsers() } };
         var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("New Transaction", parameters, options);
         var result = await dialog.Result;
@@ -517,7 +517,7 @@ else
     {
         await LoadTrip();
         int index = _trip.Transactions.IndexOf(transaction);
-        DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true };
+        DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
         var parameters = new DialogParameters<CreateTransactionDialog> { { x => x.Users, GetTripUsers() },
             { x => x.Transaction, transaction } };
         var dialog = await DialogService.ShowAsync<CreateTransactionDialog>("Edit Transaction", parameters, options);

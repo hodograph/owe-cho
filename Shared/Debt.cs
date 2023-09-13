@@ -8,6 +8,8 @@ namespace BlazorApp.Shared
     {
         public string Debtor { get; set; }
 
+        public string Memo { get; set; }
+
         public double Amount { get; set; }
     }
 }

@@ -55,8 +55,6 @@ else
 
     private string _searchString = string.Empty;
 
-    [CascadingParameter] protected Task<AuthenticationState> AuthState { get; set; }
-
     [CascadingParameter] protected User CurrentUser { get; set; }
 
     [CascadingParameter] protected User[] Users { get; set; }

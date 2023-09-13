@@ -23,7 +23,17 @@ namespace BlazorApp.Shared
         {
             List<Debt> debts = new List<Debt>();
 
-            Debts.ForEach(x => debts.Add(new Debt() { Amount = x.Amount, Debtor = x.Debtor }));
+            foreach(Debt debt in Debts)
+            {
+                if(debts.Any(x => x.Debtor == debt.Debtor))
+                {
+                    debts.FirstOrDefault(x => x.Debtor == debt.Debtor).Amount += debt.Amount;
+                }
+                else
+                {
+                    debts.Add(new Debt() { Debtor = debt.Debtor, Amount = debt.Amount });
+                }
+            }
 
             double debtsTotal = debts.Select(x => x.Amount).Sum();
             double remainder = Total - debtsTotal;
@@ -51,6 +61,8 @@ namespace BlazorApp.Shared
                 double remainingSplit = remainder / debts.Count;
                 debts.ForEach(x => x.Amount += remainingSplit);
             }
+
+            debts.RemoveAll(x => Math.Round(x.Amount, 2) == 0);
 
             return debts;
         }
