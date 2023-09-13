@@ -1,4 +1,5 @@
 ﻿@inject HttpClient Http
+@inject IDialogService DialogService
 
 <MudDialog>
     <TitleContent>
@@ -9,7 +10,7 @@
     <DialogContent>
         <MudTextField @bind-Value="_transaction.TransactionName" Label="Name" Variant="Variant.Outlined"></MudTextField>
 
-        <MudAutocomplete T="User" Label="Payer" Variant="Variant.Outlined" SearchFunc="@Search" @bind-Value="_payer" ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"></MudAutocomplete>
+        <MudAutocomplete T="User" Label="Payer" Variant="Variant.Outlined" SearchFunc="@Search" @bind-Value="Payer" ToStringFunc="@(x => $"{x.DisplayName} ({x.email})")"></MudAutocomplete>
 
         <MudNumericField @bind-Value="_transaction.Total" Label="Total" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney"></MudNumericField>
         <MudTooltip>
@@ -66,7 +67,7 @@
                     @context.Memo
                 </MudTd>
                 <MudTd DataLabel="Amount">
-                    $@Math.Round(context.Amount, 2);
+                    $@Math.Round(context.Amount, 2)
                 </MudTd>
                 <MudTd>
                     <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_transaction.Debts.Remove(context); StateHasChanged();}"></MudIconButton>
@@ -133,6 +134,16 @@
     public User[] Users { get; set; }
 
     private User _payer;
+    private User Payer
+    {
+        get => _payer;
+        set
+        {
+            _transaction.Payer = value.email;
+            _payer = value;
+            StateHasChanged();
+        }
+    }
 
     private bool _processingImage = false;
 
@@ -141,8 +152,18 @@
         MudDialog.Cancel();
     }
 
-    private void Add()
+    private async Task Add()
     {
+        if(_payer == default || _transaction.Debts.Any(x => string.IsNullOrWhiteSpace(x.Debtor)))
+        {
+            var parameters = new DialogParameters<ConfirmationDialog> {
+                { x => x.Message, "There are one or more undefined debtors and/or payer. Please defined all debtors and the payer." },
+                {x => x.ShowCancel, false }
+            };
+            var dialog = await DialogService.ShowAsync<ConfirmationDialog>("Undefined Participants", parameters);
+            return;
+        }
+
         if(_transaction.TransactionId == default)
         {
             _transaction.TransactionId = Guid.NewGuid();
