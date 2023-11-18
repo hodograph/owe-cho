@@ -2,8 +2,120 @@
 
 <PageTitle>Home | SyncOwe</PageTitle>
 
-<MudText Typo="Typo.h3">Welcome to SyncOwe!</MudText>
+<MudText Typo="Typo.h3" Align="Align.Center">Welcome to SyncOwe!</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">SyncOwe allows you to sync who owes who money while on a trip.</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">To get started go to Active Trips in the side panel and create your first trip, or wait for someone else to invite you to a trip. For more information see below.</MudText>
 
-<MudText Typo="Typo.body1">SyncOwe allows you to sync who owes who money while on a trip.</MudText>
+<br/>
+<MudText Typo="Typo.h4" Align="Align.Center">How it works</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">SyncOwe organizes payments via Trips.</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">There are 2 kinds of trips: Default, and Indefinite.</MudText>
 
-<MudText Typo="Typo.body1">To get started go to Active Trips in the side panel and create your first trip, or wait for someone else to invite you to a trip.</MudText>
+<br/>
+<MudText Typo="Typo.h5" Align="Align.Center">Default Trips</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Default trips go through 3 stages, Active, In Payment, and Archive.</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Only the trip owner can transition between these states.</MudText>
+
+
+<br />
+<MudText Typo="Typo.h6" Align="Align.Center">Active</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Active trips are trips that are currently accepting new transactions. You cannot reimburse people at this stage of the trip.</MudText>
+
+<br />
+<MudText Typo="Typo.h6" Align="Align.Center">In Payment</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Trips that are in payment allow users to start reimbursing people they owe. You cannot add more payments at this time.</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Once everyone has been reimbursed the trip owner can archive the trip.</MudText>
+
+
+<br/>
+<MudText Typo="Typo.h6" Align="Align.Center">Archived</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Archived trips are still viewable for history, but nobody can add new transactions or reimbursements.</MudText>
+
+
+<br />
+<MudText Typo="Typo.h5" Align="Align.Center">Indefinite Trips</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Indefinite trips are trips that you don't intend to have a defined end date (ex: roommates).</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Indefinite trips allow submission of transactions and reimbursements at the same time.</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Indefinite trips cannot be archived, to archive an indefinite trip transition it back to a default trip and go through the 3 phases.</MudText>
+
+<br/>
+<MudText Typo="Typo.h5" Align="Align.Center">Editing Trips</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">The owner of a trip can edit the trip, add users to it, and set the trip type.</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">To edit the trip navigate to the trip page and click Edit in the top right.</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">You should get a popup matching the image below.</MudText>
+<MudPaper Class="d-flex justify-center">
+    <MudImage Src="EditDialog.png"/>
+</MudPaper>
+
+<br />
+<MudText Typo="Typo.h5" Align="Align.Center">Adding Transactions</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">To add a transaction toa  trip click the New Transaction button in the top right of the trip page,
+    or the Add Transaction button on the top right of the Transaction table. The transaction fields will be explained below</MudText>
+
+<br />
+<MudText Typo="Typo.h6" Align="Align.Center">Name</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">This is the name of the transaction. Can be whatever you want but generally identifiable about the purchase.</MudText>
+
+<br />
+<MudText Typo="Typo.h6" Align="Align.Center">Payer</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">The person who payed for this transaction.</MudText>
+
+<br />
+<MudText Typo="Typo.h6" Align="Align.Center">Total</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">The total amount of the transaction, including tax and tip</MudText>
+
+<br />
+<MudText Typo="Typo.h6" Align="Align.Center">Proportionally Split Remainder</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">Whether or not the remaining amount of the transaction after debts have been deducted should be split
+    proportionally by the amount of each debt, or evenly amongst the debtors and payer.
+</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">
+    The best way to understand Proportional splitting is to think of 2 types of transactions: Restaraunts and Tickets.
+</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">
+    With restaurants everyone orders a different item that costs a different amount so tax and tip will be split proportionally to each item at the end.
+    So enter each item purchased, its amount, and who ordered it (including the payers items) and the remaining amount (tax and tip) will be proportionally split amongst all participants.
+</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">
+    For tickets each ticket is the same price so just enter the participants of the transaction and the total cost will be divided evenly between the payer and each debtor.
+    In the case someone purchased 2 tickets you could specify the Amount of the extra ticket in the debts section to account for this.
+</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">
+    See pictures below for examples.
+</MudText>
+
+<br />
+<MudText Typo="Typo.h6" Align="Align.Center">Populate from receipt</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">
+    Clicking this button will let you upload or take a picture of a receipt and auto populate all debts and the total. You will then need to select who purchased each item.
+    Note when populating from a receipt the assumption is made this is a proportional split transaction as most even split transactions would not require scanning a receipt of individual items.
+</MudText>
+
+<br />
+<MudText Typo="Typo.h6" Align="Align.Center">Debts</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">
+    Here is where you can add people who owe the payer for this transaction. Memo is an optional field.
+    Amount is only required when doing a proportional transaction.
+</MudText>
+
+<br />
+<MudText Typo="Typo.h6" Align="Align.Center">Calculated payments.</MudText>
+<MudText Typo="Typo.body1" Align="Align.Center">
+    This section is a live update of what each person will owe for the transaction with the current input. For the payer this states the amount they will not get reimbursed by the others for.
+</MudText>
+
+<br />
+<MudPaper Class="d-flex justify-center">
+    <MudStack Row="false">
+        <MudText Typo="Typo.h6" Align="Align.Center">Transaction Examples</MudText>
+        <MudImage Src="RestaurantTransaction.png" />
+        <MudText Typo="Typo.body2" Align="Align.Center">
+            Here the payer and debtor's items are both listed and the remainder is split proportionally.
+        </MudText>
+        <br/>
+        <MudImage Src="TicketTransaction.png" />
+        <MudText Typo="Typo.body2" Align="Align.Center">
+            Here the debtor is listed and the $50 amount is calculated as an offset.
+        </MudText>
+    </MudStack>
+</MudPaper>
