@@ -164,9 +164,9 @@
             return;
         }
 
-        if(_transaction.TransactionId == default)
+        if(_transaction.id == default)
         {
-            _transaction.TransactionId = Guid.NewGuid();
+            _transaction.id = Guid.NewGuid();
         }
         _transaction.Payer = _payer.email;
 

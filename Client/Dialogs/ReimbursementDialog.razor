@@ -57,7 +57,7 @@
 
     private void Add()
     {
-        Reimbursement.ReimbursementId = Guid.NewGuid();
+        Reimbursement.id = Guid.NewGuid();
         Reimbursement.Payer = _payer.email;
         Reimbursement.Recipient = _recipient.email;
 

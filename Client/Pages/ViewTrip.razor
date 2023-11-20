@@ -43,7 +43,7 @@ else
             }
         </MudStack>
     </MudStack>
-    @if (_trip.Transactions.Any())
+    @if (_transactions.Any())
     {
         <MudDivider DividerType="DividerType.Middle" Class="my-6" />
         <MudText Typo="Typo.h4">Personal Stats</MudText>
@@ -204,7 +204,7 @@ else
         </MudStack>
 
         <MudDivider DividerType="DividerType.Middle" Class="my-6" />
-        <MudTable Items="@_trip.Transactions" Class="mb-6">
+        <MudTable Items="@_transactions" Class="mb-6">
             <ToolBarContent>
                 <MudText Typo="Typo.h6">Transactions</MudText>
                 <MudSpacer />
@@ -249,7 +249,7 @@ else
         @if(_trip.TripState != TripState.Live || _trip.Indefinite)
         {
             <MudDivider DividerType="DividerType.Middle" Class="my-6" />
-            <MudTable Items="@_trip.Reimbursements" Class="mb-6">
+            <MudTable Items="@_reimbursements" Class="mb-6">
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Reimbursements</MudText>
                     <MudSpacer />
@@ -301,6 +301,10 @@ else
 
     private Trip _trip { get; set; }
 
+    private List<Reimbursement> _reimbursements { get; set; } = new List<Reimbursement>();
+
+    private List<Transaction> _transactions { get; set; } = new List<Transaction>();
+
     private string _searchString = string.Empty;
 
     private Dictionary<User, double> _spentStats = new Dictionary<User, double>();
@@ -342,6 +346,11 @@ else
         try
         {
             _trip = await Http.GetFromJsonAsync<Trip>($"/api/trip/{id}") ?? new Trip();
+
+            _transactions = await Http.GetFromJsonAsync<List<Transaction>>($"/api/transactions/{id}") ?? new List<Transaction>();
+            
+            _reimbursements = await Http.GetFromJsonAsync<List<Reimbursement>>($"/api/reimbursements/{id}") ?? new List<Reimbursement>();
+
             _spentStats.Clear();
             _oweStats.Clear();
             _personalSpentStats.Clear();
@@ -377,7 +386,7 @@ else
         ref Dictionary<User, double> simplifiedPayments, 
         ref Dictionary<User, double> simplifiedRequests)
     {
-        foreach(Transaction transaction in _trip.Transactions)
+        foreach(Transaction transaction in _transactions)
         {
             User spender = UserFromEmail(transaction.Payer);
 
@@ -432,7 +441,7 @@ else
             }
         }
 
-        foreach (Reimbursement reimbursement in _trip.Reimbursements.Where(x => x.Payer == user.email || x.Recipient == user.email))
+        foreach (Reimbursement reimbursement in _reimbursements.Where(x => x.Payer == user.email || x.Recipient == user.email))
         {
             if (reimbursement.Payer == user.email)
             {
@@ -506,17 +515,13 @@ else
 
         if (!result.Canceled && result.Data is Transaction transaction)
         {
-            await LoadTrip();
-            _trip.Transactions.Add(transaction);
-            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+            await Http.PutAsJsonAsync<Transaction>($"/api/SetTransaction/{id}", transaction);
             await LoadTrip();
         }
     }
 
     private async void UpdateTransaction(Transaction transaction)
     {
-        await LoadTrip();
-        int index = _trip.Transactions.IndexOf(transaction);
         DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
         var parameters = new DialogParameters<CreateTransactionDialog> { { x => x.Users, GetTripUsers() },
             { x => x.Transaction, transaction } };
@@ -525,9 +530,7 @@ else
 
         if (!result.Canceled && result.Data is Transaction newTransaction)
         {
-            await LoadTrip();
-            _trip.Transactions[index] = newTransaction;
-            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+            await Http.PutAsJsonAsync<Transaction>($"/api/SetTransaction/{id}", newTransaction);
             await LoadTrip();
         }
     }
@@ -536,24 +539,20 @@ else
     {
         DialogOptions options = new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true };
         var parameters = new DialogParameters<ReimbursementDialog> { { x => x.Users, GetTripUsers() } };
-        var dialog = await DialogService.ShowAsync<ReimbursementDialog>("New Transaction", parameters, options);
+        var dialog = await DialogService.ShowAsync<ReimbursementDialog>("New Reimbursement", parameters, options);
         var result = await dialog.Result;
 
         if (!result.Canceled && result.Data is Reimbursement reimbursement)
         {
-            await LoadTrip();
-            _trip.Reimbursements.Add(reimbursement);
-            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+            await Http.PutAsJsonAsync<Reimbursement>($"/api/SetReimbursement/{id}", reimbursement);
             await LoadTrip();
         }
     }
 
     private async void ConfirmReimbursement(Reimbursement reimbursement)
     {
-        await LoadTrip();
-        int index = _trip.Reimbursements.FindIndex(x => x.ReimbursementId == reimbursement.ReimbursementId);
-        _trip.Reimbursements[index].Confirmed = true;
-        await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+        reimbursement.Confirmed = true;
+        await Http.PutAsJsonAsync<Reimbursement>($"/api/SetReimbursement{id}", reimbursement);
         await LoadTrip();
     }
 
@@ -582,7 +581,7 @@ else
         var parameters = new DialogParameters<ConfirmationDialog> { { x => x.Message, "Send to payments stage? You will no longer be able to add transactions." } };
         var dialog = await DialogService.ShowAsync<ConfirmationDialog>("Send To Payments", parameters);
         var result = await dialog.Result;
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             await LoadTrip();
             _trip.TripState = TripState.Payment;
@@ -594,7 +593,7 @@ else
     private async void Archive()
     {
         await LoadTrip();
-        if(_trip.Reimbursements.Any(x => !x.Confirmed))
+        if(_reimbursements.Any(x => !x.Confirmed))
         {
             var parameters = new DialogParameters<ConfirmationDialog> { 
                 { x => x.Message, "There are still unconfirmed reimbursements. This trip cannot be archived." },
@@ -643,7 +642,7 @@ else
                 var parameters = new DialogParameters<ConfirmationDialog> { { x => x.Message, "Archive this trip? All reimbursements have been sent and confirmed." } };
                 var dialog = await DialogService.ShowAsync<ConfirmationDialog>("Archive Trip", parameters);
                 var result = await dialog.Result;
-                if (!result.Cancelled)
+                if (!result.Canceled)
                 {
                     _trip.TripState = TripState.Archived;
                     await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
@@ -668,16 +667,16 @@ else
 
     private async Task SendPayment(User recipient, double amount)
     {
-        await LoadTrip();
-        _trip.Reimbursements.Add(new Reimbursement()
+        Reimbursement reimbursement = new Reimbursement()
         {
             Recipient = recipient.email,
             Payer = CurrentUser.email,
             Amount = amount,
-            ReimbursementId = Guid.NewGuid()
-        });
+            id = Guid.NewGuid(),
+            TripId = _trip.id
+        };
 
-        await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+        await Http.PutAsJsonAsync<Reimbursement>($"/api/SetReimbursement/{id}", reimbursement);
         await LoadTrip();
 
         Navigation.NavigateTo(string.Format(Constants.SEND_PAYMENT_LINK, recipient.VenmoId, amount, _trip.Name));
@@ -686,15 +685,16 @@ else
     private async Task SendRequest(User debtor, double amount)
     {
         await LoadTrip();
-        _trip.Reimbursements.Add(new Reimbursement()
+        Reimbursement reimbursement = new Reimbursement()
         {
             Recipient = CurrentUser.email,
             Payer = debtor.email,
-                Amount = amount,
-                ReimbursementId = Guid.NewGuid()
-        });
+            Amount = amount,
+            id = Guid.NewGuid(),
+            TripId = _trip.id
+        };
 
-        await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+        await Http.PutAsJsonAsync<Reimbursement>($"/api/SetReimbursement/{id}", reimbursement);
         await LoadTrip();
 
         Navigation.NavigateTo(string.Format(Constants.REQUEST_PAYMENT_LINK, debtor.VenmoId, amount, _trip.Name));

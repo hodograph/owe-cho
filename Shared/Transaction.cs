@@ -7,7 +7,9 @@ namespace BlazorApp.Shared
 {
     public class Transaction
     {
-        public Guid TransactionId { get; set; }
+        public Guid id { get; set; }
+
+        public Guid TripId { get; set; }
 
         public string TransactionName { get; set; }
 

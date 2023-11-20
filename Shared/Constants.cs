@@ -10,6 +10,10 @@ namespace BlazorApp.Shared
 
         public const string TRIPS_TABLE_NAME = "Trips";
 
+        public const string TRANSACTIONS_TABLE_NAME = "Transactions";
+
+        public const string REIMBURSEMENTS_TABLE_NAME = "Reimbursements";
+
         public const string USERS_TABLE_NAME = "Users";
 
         public const string CONNECTION_SETTINGS_KEY = "CosmosDBConnection";

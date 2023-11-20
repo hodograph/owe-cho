@@ -6,7 +6,10 @@ namespace BlazorApp.Shared
 {
     public class Reimbursement
     {
-        public Guid ReimbursementId { get; set; }
+        public Guid id { get; set; }
+
+        public Guid TripId { get; set; }
+
         public string Payer { get; set; }
 
         public string Recipient { get; set; }
