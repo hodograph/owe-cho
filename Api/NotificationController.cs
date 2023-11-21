@@ -1,13 +1,5 @@
 ﻿using BlazorApp.Shared;
-using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Description;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WebPush;
