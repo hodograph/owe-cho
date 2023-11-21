@@ -35,7 +35,11 @@ namespace Api
             SqlQuery = "SELECT * FROM Transactions t where t.TripId = {tripId}")] List<Transaction> transactions,
             [CosmosDBInput(databaseName: Constants.DATABASE_NAME,
             collectionName:Constants.SUBSCRIPTIONS_TABLE_NAME,
-            ConnectionStringSetting = Constants.CONNECTION_SETTINGS_KEY)] List<NotificationSubscription> subscriptions)
+            ConnectionStringSetting = Constants.CONNECTION_SETTINGS_KEY)] List<NotificationSubscription> subscriptions,
+            [CosmosDBInput(databaseName: Constants.DATABASE_NAME,
+            collectionName:Constants.USERS_TABLE_NAME,
+            ConnectionStringSetting = Constants.CONNECTION_SETTINGS_KEY,
+            SqlQuery = "SELECT * FROM Users")] List<User> users)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
             Trip trip = trips.FirstOrDefault();
@@ -51,11 +55,13 @@ namespace Api
             if (trip.SharedWith.Append(trip.Owner).Contains(claim.Identity.Name) && transaction.TripId == trip.id)
             {
                 List<Debt> debts = transaction.CalculatePayments();
-                string message = $"Transaction {transaction.TransactionName} updated: ";
+                string message = $"Transaction '{transaction.TransactionName}' updated: ";
                 if (oldTransaction == null)
                 {
-                    message = $"New transaction {transaction.TransactionName}: ";
+                    message = $"New transaction '{transaction.TransactionName}': ";
                 }
+
+                User payer = users.FirstOrDefault(x => x.email == transaction.Payer);
 
                 foreach (string email in transaction.Debts.Select(x => x.Debtor))
                 {
@@ -63,7 +69,7 @@ namespace Api
                     {
                         foreach (NotificationSubscription subscription in subscriptions.Where(x => x.UserId == email))
                         {
-                            message += $"You owe ${debts.FirstOrDefault(x => x.Debtor == email).Amount}";
+                            message += $"You owe {payer.DisplayName} ${Math.Round(debts.FirstOrDefault(x => x.Debtor == email).Amount, 2)}";
                             await SendNotificationAsync(trip, subscription, message);
                         }
                     }
@@ -73,7 +79,7 @@ namespace Api
                 {
                     foreach (NotificationSubscription subscription in subscriptions.Where(x => x.UserId == transaction.Payer))
                     {
-                        message += $"You're owed ${transaction.Total - debts.FirstOrDefault(x => x.Debtor == transaction.Payer).Amount}";
+                        message += $"You're owed ${Math.Round(transaction.Total - debts.FirstOrDefault(x => x.Debtor == transaction.Payer).Amount, 2)}";
                         await SendNotificationAsync(trip, subscription, message);
                     }
                 }
