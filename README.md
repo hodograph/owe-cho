@@ -24,6 +24,24 @@
 
 1. Add a unique key and enter `/email`, then click OK
 
+1. Select New Container again, choose Use existing and select syncowe
+
+1. Under Contianer id type in `Transactions`
+
+1. Under Partition key type in `/id`, then click OK
+
+1. Select New Container again, choose Use existing and select syncowe
+
+1. Under Contianer id type in `Reimbursements`
+
+1. Under Partition key type in `/id`, then click OK
+
+1. Select New Container again, choose Use existing and select syncowe
+
+1. Under Contianer id type in `NotificationSubscriptions`
+
+1. Under Partition key type in `/id`, then click OK
+
 ### Connecting to local database
 
 1. In the **Api** folder, create a `local.settings.json`. 
