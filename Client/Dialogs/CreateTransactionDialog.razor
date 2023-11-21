@@ -47,11 +47,11 @@
                 </MudButton>
             </ButtonTemplate>
         </MudFileUpload>
-        <MudTable Items="@_transaction.Debts" RowEditCommit="(e) => StateHasChanged()" Class="my-6">
+        <MudTable Items="@_transaction.Debts" RowEditPreview="EditStarted" Class="my-6" RowEditCancel="EditDone" RowEditCommit="EditDone">
             <ToolBarContent>
                 <MudText Typo="Typo.subtitle1">Debts</MudText>
                 <MudSpacer />
-                <MudButton FullWidth="false" StartIcon="@Icons.Material.Filled.Add" OnClick="(e) => {_transaction.Debts.Add(new Debt()); StateHasChanged();}">Add Debt</MudButton>
+                <MudButton FullWidth="false" StartIcon="@Icons.Material.Filled.Add" OnClick="(e) => {_transaction.Debts.Add(new Debt()); StateHasChanged();}" Disabled="_editing">Add Debt</MudButton>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Debtor</MudTh>
@@ -70,7 +70,7 @@
                     $@Math.Round(context.Amount, 2)
                 </MudTd>
                 <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_transaction.Debts.Remove(context); StateHasChanged();}"></MudIconButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_transaction.Debts.Remove(context); StateHasChanged();}" Disabled="_editing"></MudIconButton>
                 </MudTd>
             </RowTemplate>
             <RowEditingTemplate>
@@ -88,9 +88,6 @@
                 <MudTd DataLabel="Amount">
                     <MudNumericField @bind-Value="context.Amount" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney"></MudNumericField>
                 </MudTd>
-                <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_transaction.Debts.Remove(context); StateHasChanged();}"></MudIconButton>
-                </MudTd>
             </RowEditingTemplate>
         </MudTable>
         <MudSpacer/>
@@ -103,7 +100,7 @@
                 <MudTh>Amount</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="Debtor">@Users.FirstOrDefault(x => x.email == context.Debtor)?.DisplayName ?? context.Debtor</MudTd>
+                <MudTd DataLabel="Debtor">@(Users.FirstOrDefault(x => x.email == context.Debtor)?.DisplayName ?? context.Debtor)</MudTd>
                 <MudTd DataLabel="Amount">$@Math.Round(context.Amount, 2)</MudTd>
             </RowTemplate>
         </MudTable>
@@ -117,6 +114,8 @@
 @code
 {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    private bool _editing { get; set; }
 
     private Transaction _transaction = new Transaction();
     [Parameter]
@@ -204,6 +203,18 @@
         _transaction.Debts.Clear();
         _transaction.Debts.AddRange(generated.Debts);
         _processingImage = false;
+        StateHasChanged();
+    }
+
+    private void EditStarted(object element)
+    {
+        _editing = true;
+        StateHasChanged();
+    }
+
+    private void EditDone(object element)
+    {
+        _editing = false;
         StateHasChanged();
     }
 }
