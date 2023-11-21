@@ -103,7 +103,7 @@
                 <MudTh>Amount</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="Debtor">@context.Debtor</MudTd>
+                <MudTd DataLabel="Debtor">@Users.FirstOrDefault(x => x.email == context.Debtor)?.DisplayName ?? context.Debtor</MudTd>
                 <MudTd DataLabel="Amount">$@Math.Round(context.Amount, 2)</MudTd>
             </RowTemplate>
         </MudTable>
