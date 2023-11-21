@@ -3,11 +3,11 @@
     <DialogContent>
         <MudTextField @bind-Value="_trip.Name" Label="Name" Variant="Variant.Outlined"></MudTextField>
         <MudSwitch @bind-Checked="_trip.Indefinite" Label="Indefinite Trip" Color="Color.Primary"/>
-        <MudTable Items="@_sharedWith">
+        <MudTable Items="@_sharedWith" RowEditPreview="EditStarted" RowEditCancel="EditDone" RowEditCommit="EditDone">
             <ToolBarContent>
                 <MudText Typo="Typo.subtitle1">Shared With</MudText>
                 <MudSpacer/>
-                <MudButton FullWidth="false" StartIcon="@Icons.Material.Filled.Add" OnClick="(e) => {_sharedWith.Add(new User()); StateHasChanged();}">Add User</MudButton>
+                <MudButton FullWidth="false" StartIcon="@Icons.Material.Filled.Add" OnClick="(e) => {_sharedWith.Add(new User()); StateHasChanged();}" Disabled="_editing">Add User</MudButton>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Name</MudTh>
@@ -22,7 +22,7 @@
                     @context.email
                 </MudTd>
                 <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_sharedWith.Remove(context); StateHasChanged();}"></MudIconButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_sharedWith.Remove(context); StateHasChanged();}" Disabled="_editing"></MudIconButton>
                 </MudTd>
             </RowTemplate>
             <RowEditingTemplate>
@@ -30,10 +30,12 @@
                     @context.DisplayName
                 </MudTd>
                 <MudTd DataLabel="Email">
-                    <MudAutocomplete T="string" Variant="Variant.Outlined" SearchFunc="@Search" Value="@context.email" ValueChanged="@(x => {context.DisplayName = Users.FirstOrDefault(y => y.email == x).DisplayName; context.email = x;})"></MudAutocomplete>
-                </MudTd>
-                <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="(e) => {_sharedWith.Remove(context); StateHasChanged();}"></MudIconButton>
+                    <MudAutocomplete T="string" 
+                                     Variant="Variant.Outlined" 
+                                     SearchFunc="@Search" 
+                                     Value="@context.email" 
+                                     ValueChanged="@(x => {context.DisplayName = Users.FirstOrDefault(y => y.email == x).DisplayName; context.email = x;})"
+                                     ToStringFunc="@(x => $"{Users.FirstOrDefault(y => y.email == x).DisplayName} ({x})")"></MudAutocomplete>
                 </MudTd>
             </RowEditingTemplate>
         </MudTable>
@@ -49,6 +51,8 @@
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
 
     private Trip _trip = new Trip();
+
+    private bool _editing { get; set; }
 
     [Parameter]
     public Trip Trip
@@ -84,11 +88,23 @@
 
     private async Task<IEnumerable<string>> Search(string value)
     {
-       if (string.IsNullOrEmpty(value))
+        if (string.IsNullOrEmpty(value))
         {
             return Users.Select(x => x.email);
         }
         return Users.Where(x => x.email.Contains(value, StringComparison.OrdinalIgnoreCase)
             || x.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(x => x.email);
+    }
+
+    private void EditStarted(object element)
+    {
+        _editing = true;
+        StateHasChanged();
+    }
+
+    private void EditDone(object element)
+    {
+        _editing = false;
+        StateHasChanged();
     }
 }
