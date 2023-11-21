@@ -74,7 +74,7 @@ else
         if (!result.Canceled && result.Data is Trip trip)
         {
             trip.Owner = CurrentUser.email;
-            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", trip);
+            await Http.PutAsJsonAsync<Trip>($"/api/SetTrip/{trip.id}", trip);
             await LoadTrips();
         }
     }

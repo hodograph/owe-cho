@@ -571,7 +571,7 @@ else
         if (!result.Canceled && result.Data is Trip updatedTrip)
         {
             _trip = updatedTrip;
-            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+            await Http.PutAsJsonAsync<Trip>($"/api/SetTrip/{_trip.id}", _trip);
             await LoadTrip();
         }
     }
@@ -585,7 +585,7 @@ else
         {
             await LoadTrip();
             _trip.TripState = TripState.Payment;
-            await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+            await Http.PutAsJsonAsync<Trip>($"/api/SetTrip{_trip.id}", _trip);
             await LoadTrip();
         }
     }
@@ -645,7 +645,7 @@ else
                 if (!result.Canceled)
                 {
                     _trip.TripState = TripState.Archived;
-                    await Http.PutAsJsonAsync<Trip>("/api/SetTrip", _trip);
+                    await Http.PutAsJsonAsync<Trip>($"/api/SetTrip/{_trip.id}", _trip);
                     await LoadTrip();
                 }
             }

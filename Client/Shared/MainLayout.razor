@@ -2,6 +2,7 @@
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
+@inject IJSRuntime JSRuntime
 
 <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" @ref="@_mudThemeProvider"/>
 <MudDialogProvider/>
@@ -68,7 +69,28 @@
         ClientPrincipal user = (await Http.GetFromJsonAsync<ClientPrincipalJson>("/.auth/me")).ClientPrincipal;
         if (!string.IsNullOrWhiteSpace(user.UserId))
         {
-            UpdateUser(user.UserId, user.UserDetails);
+            await UpdateUser(user.UserId, user.UserDetails);
+            await RequestNotificationSubscriptionAsync(user.UserDetails);
+        }
+    }
+
+    private async Task RequestNotificationSubscriptionAsync(string email)
+    {
+        var subscription = await JSRuntime.InvokeAsync<NotificationSubscription>("blazorPushNotifications.requestSubscription");
+        if (subscription != null)
+        {
+            if(subscription.id == default)
+            {
+                subscription.id = Guid.NewGuid();
+            }
+            Console.WriteLine(subscription.id);
+            subscription.UserId = email;
+            var response = await Http.PutAsJsonAsync<NotificationSubscription>("api/subscribe", subscription);
+            response.EnsureSuccessStatusCode();
+        }
+        else
+        {
+            Console.WriteLine("null");
         }
     }
 
@@ -82,7 +104,7 @@
         NavigationManager.NavigateTo("/Profile");
     }
 
-    private async void UpdateUser(string id, string email)
+    private async Task UpdateUser(string id, string email)
     {
         try
         {

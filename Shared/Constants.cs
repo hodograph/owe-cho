@@ -16,6 +16,8 @@ namespace BlazorApp.Shared
 
         public const string USERS_TABLE_NAME = "Users";
 
+        public const string SUBSCRIPTIONS_TABLE_NAME = "NotificationSubscriptions";
+
         public const string CONNECTION_SETTINGS_KEY = "CosmosDBConnection";
 
         public const string EMAIL_ClAIM_NAME = "preferred_username";
